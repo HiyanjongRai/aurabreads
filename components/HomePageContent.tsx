@@ -16,11 +16,11 @@ const categories = [
 const catEmoji = ["💍", "📿", "⛓️", "💍", "🪮", "🕶️"];
 
 const products = [
-  { name: "Twist Knot Earrings", price: "$18.00", rating: 4.5, reviews: 128, img: "/product-earrings1.png" },
-  { name: "Chunky Hoop Earrings", price: "$20.00", rating: 4.8, reviews: 96, img: "/product-earrings2.png" },
-  { name: "Pearl Drop Earrings", price: "$16.00", rating: 4.6, reviews: 74, img: "/product-earrings3.png" },
-  { name: "Chain Link Bracelet", price: "$22.00", rating: 4.7, reviews: 64, img: "/product-bracelet.png" },
-  { name: "Layered Pendant Necklace", price: "$24.00", rating: 4.9, reviews: 112, img: "/product-earrings1.png" },
+  { name: "Twist Knot Earrings", price: "Rs 18.00", rating: 4.5, reviews: 128, img: "/product-earrings1.png" },
+  { name: "Chunky Hoop Earrings", price: "Rs 20.00", rating: 4.8, reviews: 96, img: "/product-earrings2.png" },
+  { name: "Pearl Drop Earrings", price: "Rs 16.00", rating: 4.6, reviews: 74, img: "/product-earrings3.png" },
+  { name: "Chain Link Bracelet", price: "Rs 22.00", rating: 4.7, reviews: 64, img: "/product-bracelet.png" },
+  { name: "Layered Pendant Necklace", price: "Rs 24.00", rating: 4.9, reviews: 112, img: "/product-earrings1.png" },
 ];
 
 function StarRating({ rating }: { rating: number }) {
@@ -133,7 +133,7 @@ export default function HomePageContent() {
       <section className="ab-features-strip">
         <div className="ab-feature">
           <svg width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-          <div><strong>Free Shipping</strong><span>On orders over $50</span></div>
+          <div><strong>Free Shipping</strong><span>On orders over Rs 50</span></div>
         </div>
         <div className="ab-feature">
           <svg width="36" height="36" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
@@ -222,11 +222,8 @@ export default function HomePageContent() {
           <div className="ab-footer-bottom">
             <p>© 2025 AuraBeads Fashion Jewelry. All Rights Reserved.</p>
             <div className="ab-payment-icons">
-              <span>VISA</span>
-              <span>MC</span>
-              <span>AMEX</span>
-              <span>PayPal</span>
-              <span>Apple Pay</span>
+              <span>Khalti</span>
+              <span>eSewa</span>
             </div>
           </div>
         </div>

@@ -10,7 +10,7 @@ export default function Navbar() {
     <header className="ab-header">
       {/* Top announcement bar */}
       <div className="ab-topbar">
-        <span>FREE SHIPPING ON ORDERS OVER $50</span>
+        <span>FREE SHIPPING ON ORDERS OVER Rs 50</span>
         <nav className="ab-topbar-links">
           <Link href="#">About Us</Link>
           <Link href="#">Track Order</Link>
