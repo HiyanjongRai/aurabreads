@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum Role {
@@ -25,8 +26,36 @@ model User {
   updatedAt     DateTime       @updatedAt
   refreshTokens RefreshToken[]
   auditLogs     AuditLog[]
+  products      Product[]
 
   @@index([email])
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  sellerId         String
+  name             String   @db.VarChar(255)
+  sku              String?  @db.VarChar(100)
+  category         String   @db.VarChar(100)
+  shortDescription String?  @db.VarChar(255)
+  fullDescription  String?  @db.Text
+  price            Float
+  salePrice        Float?
+  stock            Int      @default(0)
+  images           String[]
+  status           String   @default("active") @db.VarChar(50)
+  featured         Boolean  @default(false)
+  material         String?  @db.VarChar(100)
+  color            String?  @db.VarChar(100)
+  style            String?  @db.VarChar(100)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  seller User @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId])
+  @@index([category])
+  @@index([status])
 }
 
 model RefreshToken {
