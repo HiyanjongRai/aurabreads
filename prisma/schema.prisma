@@ -7,14 +7,53 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  CUSTOMER
+  SELLER
+  ADMIN
+}
+
 model User {
-  id        String   @id @default(cuid())
-  name      String   @db.VarChar(100)
-  address   String   @db.VarChar(255)
-  email     String   @unique @db.VarChar(255)
-  password  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String         @id @default(cuid())
+  name          String         @db.VarChar(100)
+  address       String         @db.VarChar(255)
+  email         String         @unique @db.VarChar(255)
+  passwordHash  String
+  role          Role           @default(CUSTOMER)
+  isVerified    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
 
   @@index([email])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String   @db.VarChar(255)
+  action    String   @db.VarChar(50)
+  ip        String   @db.VarChar(45)
+  success   Boolean
+  reason    String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([userId])
+  @@index([createdAt])
 }

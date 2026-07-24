@@ -1,0 +1,45 @@
+import { type NextRequest, NextResponse } from 'next/server';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
+
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data } = await supabase.auth.getUser();
+
+    // Redirect to login if accessing protected routes
+    if (!data.user) {
+      if (request.nextUrl.pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/login', request.url));
+      }
+    } else {
+      // Redirect to dashboard if already logged in and accessing auth pages
+      if (
+        request.nextUrl.pathname === '/login' ||
+        request.nextUrl.pathname === '/register'
+      ) {
+        return NextResponse.redirect(new URL('/dashboard', request.url));
+      }
+    }
+  } catch (error) {
+    console.error('Middleware error:', error);
+    // Continue with response on error
+  }
+
+  return response;
+}
+
+export const config = {
+  matcher: [
+    '/login',
+    '/register',
+    '/dashboard',
+    '/dashboard/:path*',
+    '/api/:path*',
+  ],
+};

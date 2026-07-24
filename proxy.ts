@@ -1,8 +1,8 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { decryptSession, sessionCookieName } from "@/lib/session";
+import { NextResponse, type NextRequest } from 'next/server';
+import { decryptSession, sessionCookieName } from '@/lib/session';
 
-const authRoutes = ["/login", "/register"];
-const protectedRoutes = ["/dashboard"];
+const authRoutes = ['/login', '/register'];
+const protectedRoutes = ['/dashboard'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -10,12 +10,12 @@ export async function proxy(request: NextRequest) {
   const session = await decryptSession(token);
 
   if (authRoutes.some((route) => pathname.startsWith(route)) && session) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   if (protectedRoutes.some((route) => pathname.startsWith(route)) && !session) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("next", pathname);
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -23,5 +23,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/register", "/dashboard/:path*"],
+  matcher: ['/login', '/register', '/dashboard/:path*'],
 };
