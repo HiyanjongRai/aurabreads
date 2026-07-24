@@ -263,7 +263,7 @@ export function SellerShell({ children, user }: SellerShellProps) {
             height: 64,
             display: "flex",
             alignItems: "center",
-            justify: "space-between",
+            justifyContent: "space-between",
             padding: "0 24px",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             background: "rgba(10,10,15,0.96)",

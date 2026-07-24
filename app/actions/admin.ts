@@ -124,7 +124,7 @@ export async function createSellerAction(
     await db.user.upsert({
       where: { email },
       update: {
-        role: 'SELLER',
+        role: 'SELLER' as any,
         name: `${name} (${storeName})`,
         address,
         isVerified: true,
@@ -135,7 +135,7 @@ export async function createSellerAction(
         address,
         email,
         passwordHash,
-        role: 'SELLER',
+        role: 'SELLER' as any,
         isVerified: true,
       },
     });
