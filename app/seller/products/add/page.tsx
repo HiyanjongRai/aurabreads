@@ -66,20 +66,18 @@ export default function AddNewProductPage() {
 
     const newPreviews: string[] = [...previews];
     Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          newPreviews.push(event.target.result as string);
-          setPreviews([...newPreviews]);
-        }
-      };
-      reader.readAsDataURL(file);
+      const url = URL.createObjectURL(file);
+      newPreviews.push(url);
     });
+    setPreviews(newPreviews);
   };
 
   const removeImage = (index: number) => {
     const updated = [...previews];
-    updated.splice(index, 1);
+    const removed = updated.splice(index, 1);
+    if (removed[0] && removed[0].startsWith('blob:')) {
+      URL.revokeObjectURL(removed[0]);
+    }
     setPreviews(updated);
   };
 
@@ -356,11 +354,6 @@ export default function AddNewProductPage() {
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
-
-              {/* Hidden Base64 Inputs for state previews */}
-              {previews.map((src, idx) => (
-                <input key={idx} type="hidden" name="imageUrls" value={src} />
-              ))}
 
               {/* Dropzone */}
               <div
