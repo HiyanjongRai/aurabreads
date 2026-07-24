@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { PublicProduct } from "@/lib/products";
+import { useState } from "react";
 
 const categories = [
   { name: "Earrings", img: "/cat-earrings.png", x: 0 },
@@ -12,18 +14,17 @@ const categories = [
   { name: "Sunglasses", img: "/cat-sunglasses.png", x: 5 },
 ];
 
-// Emoji fallback icons for each category (in case images aren't available)
 const catEmoji = ["💍", "📿", "⛓️", "💍", "🪮", "🕶️"];
 
-const products = [
-  { name: "Twist Knot Earrings", price: "Rs 18.00", rating: 4.5, reviews: 128, img: "/product-earrings1.png" },
-  { name: "Chunky Hoop Earrings", price: "Rs 20.00", rating: 4.8, reviews: 96, img: "/product-earrings2.png" },
-  { name: "Pearl Drop Earrings", price: "Rs 16.00", rating: 4.6, reviews: 74, img: "/product-earrings3.png" },
-  { name: "Chain Link Bracelet", price: "Rs 22.00", rating: 4.7, reviews: 64, img: "/product-bracelet.png" },
-  { name: "Layered Pendant Necklace", price: "Rs 24.00", rating: 4.9, reviews: 112, img: "/product-earrings1.png" },
+const demoProducts = [
+  { id: "demo-1", name: "Twist Knot Earrings", price: 18.00, salePrice: null, rating: 4.5, reviews: 128, img: "/product-earrings1.png" },
+  { id: "demo-2", name: "Chunky Hoop Earrings", price: 20.00, salePrice: null, rating: 4.8, reviews: 96, img: "/product-earrings2.png" },
+  { id: "demo-3", name: "Pearl Drop Earrings", price: 16.00, salePrice: null, rating: 4.6, reviews: 74, img: "/product-earrings3.png" },
+  { id: "demo-4", name: "Chain Link Bracelet", price: 22.00, salePrice: null, rating: 4.7, reviews: 64, img: "/product-bracelet.png" },
+  { id: "demo-5", name: "Layered Pendant Necklace", price: 24.00, salePrice: null, rating: 4.9, reviews: 112, img: "/product-earrings1.png" },
 ];
 
-function StarRating({ rating }: { rating: number }) {
+function StarRating({ rating = 5 }: { rating?: number }) {
   return (
     <div className="ab-stars" aria-label={`${rating} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((s) => (
@@ -33,7 +34,38 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-export default function HomePageContent() {
+type Props = {
+  initialProducts?: PublicProduct[];
+};
+
+export default function HomePageContent({ initialProducts = [] }: Props) {
+  const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
+
+  const toggleWishlist = (id: string) => {
+    setWishlist((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Use real DB products if available, fallback to demo items
+  const displayProducts = initialProducts.length > 0
+    ? initialProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.salePrice ?? p.price,
+        originalPrice: p.salePrice ? p.price : null,
+        rating: 4.8,
+        reviews: 42 + Math.floor(p.price % 80),
+        img: p.images[0] || "/product-earrings1.png",
+      }))
+    : demoProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        originalPrice: p.salePrice,
+        rating: p.rating,
+        reviews: p.reviews,
+        img: p.img,
+      }));
+
   return (
     <>
       {/* Trust badges */}
@@ -73,38 +105,64 @@ export default function HomePageContent() {
         </div>
       </section>
 
-      {/* Best Sellers */}
-      <section className="ab-section ab-section--gray" id="bestsellers">
+      {/* Best Sellers / Latest Products */}
+      <section className="ab-section ab-section--gray" id="bestsellers" style={{ background: '#f9f8f6', padding: '60px 0' }}>
         <div className="ab-container">
-          <div className="ab-section-header">
-            <h2 className="ab-section-title">Best Sellers</h2>
+          <div className="ab-section-header" style={{ marginBottom: '32px' }}>
+            <div>
+              <h2 className="ab-section-title" style={{ textAlign: 'left', margin: 0 }}>Best Sellers</h2>
+            </div>
             <Link href="#" className="ab-btn-outline-sm">View All</Link>
           </div>
+
           <div className="ab-products-grid">
-            {products.map((product) => (
-              <div key={product.name} className="ab-product-card">
-                <div className="ab-product-img-wrap">
-                  <Image
-                    src={product.img}
-                    alt={product.name}
-                    width={260}
-                    height={260}
-                    style={{ objectFit: "cover", width: "100%", height: "100%" }}
-                  />
-                  <button className="ab-wishlist-btn" aria-label={`Add ${product.name} to wishlist`}>
-                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                  </button>
-                </div>
-                <div className="ab-product-info">
-                  <p className="ab-product-name">{product.name}</p>
-                  <p className="ab-product-price">{product.price}</p>
-                  <div className="ab-product-rating">
-                    <StarRating rating={product.rating} />
-                    <span className="ab-review-count">({product.reviews})</span>
+            {displayProducts.map((product) => {
+              const isWishlisted = !!wishlist[product.id];
+              return (
+                <div key={product.id} className="ab-product-card">
+                  <div className="ab-product-img-wrap">
+                    {product.img.startsWith('http') || product.img.startsWith('/cat') || product.img.startsWith('/product') ? (
+                      <img
+                        src={product.img}
+                        alt={product.name}
+                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                      />
+                    ) : (
+                      <Image
+                        src={product.img}
+                        alt={product.name}
+                        width={260}
+                        height={260}
+                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                      />
+                    )}
+                    <button
+                      className="ab-wishlist-btn"
+                      onClick={() => toggleWishlist(product.id)}
+                      aria-label={`Add ${product.name} to wishlist`}
+                      style={{ color: isWishlisted ? '#e11d48' : '#666666' }}
+                    >
+                      <svg width="18" height="18" fill={isWishlisted ? '#e11d48' : 'none'} stroke={isWishlisted ? '#e11d48' : 'currentColor'} strokeWidth="1.8" viewBox="0 0 24 24">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <div className="ab-product-info">
+                    <p className="ab-product-name">{product.name}</p>
+                    <div className="ab-product-price">
+                      <span>Rs {product.price.toFixed(2)}</span>
+                      {product.originalPrice && (
+                        <span className="ab-product-price-original">Rs {product.originalPrice.toFixed(2)}</span>
+                      )}
+                    </div>
+                    <div className="ab-product-rating">
+                      <StarRating rating={product.rating} />
+                      <span className="ab-review-count">({product.reviews})</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -153,7 +211,6 @@ export default function HomePageContent() {
       <footer className="ab-footer">
         <div className="ab-container">
           <div className="ab-footer-grid">
-            {/* Brand */}
             <div className="ab-footer-brand">
               <div className="ab-footer-logo">
                 <span className="ab-logo-name">AuraBeads</span>
@@ -176,7 +233,6 @@ export default function HomePageContent() {
               </div>
             </div>
 
-            {/* Shop */}
             <div className="ab-footer-col">
               <h4>Shop</h4>
               <Link href="#">New In</Link>
@@ -188,7 +244,6 @@ export default function HomePageContent() {
               <Link href="#">Collections</Link>
             </div>
 
-            {/* Customer Care */}
             <div className="ab-footer-col">
               <h4>Customer Care</h4>
               <Link href="#">About Us</Link>
@@ -199,7 +254,6 @@ export default function HomePageContent() {
               <Link href="#">Contact Us</Link>
             </div>
 
-            {/* Information */}
             <div className="ab-footer-col">
               <h4>Information</h4>
               <Link href="#">Jewelry Care</Link>
@@ -208,7 +262,6 @@ export default function HomePageContent() {
               <Link href="#">Terms &amp; Conditions</Link>
             </div>
 
-            {/* Newsletter */}
             <div className="ab-footer-col ab-footer-newsletter">
               <h4>Newsletter</h4>
               <p>Subscribe for exclusive offers, early access and style updates.</p>
