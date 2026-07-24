@@ -25,7 +25,10 @@ import {
   UserCheck,
   Users,
   X,
+  LogOut,
+  ChevronRight,
 } from "lucide-react";
+import { logout } from "@/app/actions/auth";
 
 type SellerShellProps = {
   children: React.ReactNode;
@@ -43,197 +46,286 @@ export function SellerShell({ children, user }: SellerShellProps) {
 
   const isNavActive = (href: string) => pathname === href;
   const displayRole = user.role === "ADMIN" ? "Administrator" : "Seller";
+  const initial = user.name ? user.name[0].toUpperCase() : "S";
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] font-inter text-slate-900 flex">
+    <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", fontFamily: "Inter, sans-serif", color: "#ffffff" }}>
+      {/* Mobile Backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
           onClick={() => setSidebarOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 40, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
         />
       )}
 
+      {/* ── Sidebar ────────────────────────────────────────────────────────── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-[#111111] text-slate-300 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 50,
+          width: 260,
+          display: "flex",
+          flexDirection: "column",
+          background: "linear-gradient(180deg,#0f0f1a 0%,#0a0a12 100%)",
+          borderRight: "1px solid rgba(255,255,255,0.06)",
+          transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+          transition: "transform 0.3s ease",
+        }}
+        className="lg:!translate-x-0 lg:!static lg:!inset-auto"
       >
-        <div className="flex h-20 items-center justify-between border-b border-white/10 px-6">
-          <Link href="/seller" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#d4af37] to-[#a07c2e] text-white shadow-md">
-              <Sparkles size={18} />
+        {/* Brand Header */}
+        <div style={{ height: 68, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          <Link href="/seller" style={{ display: "flex", alignItems: "center", gap: 12, textDecoration: "none" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg,#d4af37,#a07c2e)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <Sparkles size={18} color="#000" />
             </div>
             <div>
-              <span className="block font-serif text-xl font-medium uppercase leading-none tracking-wider text-white">
-                AuraBeads
-              </span>
-              <span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d4af37]">
-                Seller Portal
-              </span>
+              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: "0.18em", color: "#d4af37", textTransform: "uppercase" }}>
+                AURABEADS
+              </div>
+              <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", marginTop: 1 }}>
+                Seller Workspace
+              </div>
             </div>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="text-slate-400 hover:text-white lg:hidden"
-            aria-label="Close menu"
+            style={{ color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", display: "flex" }}
+            className="lg:!hidden"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-4 py-6">
+        {/* Navigation Content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 12px" }}>
+          {/* Main Dashboard Link */}
           <Link
             href="/seller"
-            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all ${
-              pathname === "/seller"
-                ? "bg-[#c9a84c] text-black shadow-lg shadow-[#c9a84c]/20"
-                : "text-slate-300 hover:bg-white/5 hover:text-white"
-            }`}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "10px 14px",
+              borderRadius: 12,
+              marginBottom: 16,
+              textDecoration: "none",
+              fontSize: 13,
+              fontWeight: pathname === "/seller" ? 700 : 500,
+              color: pathname === "/seller" ? "#000" : "rgba(255,255,255,0.6)",
+              background: pathname === "/seller" ? "linear-gradient(90deg,#d4af37,#c9a84c)" : "transparent",
+              transition: "all 0.15s",
+            }}
           >
-            <LayoutDashboard size={18} />
+            <LayoutDashboard size={16} color={pathname === "/seller" ? "#000" : "rgba(255,255,255,0.4)"} />
             <span>Dashboard</span>
+            {pathname === "/seller" && <ChevronRight size={13} style={{ marginLeft: "auto" }} color="rgba(0,0,0,0.5)" />}
           </Link>
 
-          <div className="space-y-1">
-            <p className="px-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-              Manage
+          {/* Section: MANAGE */}
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(255,255,255,0.22)", textTransform: "uppercase", padding: "0 10px", marginBottom: 6 }}>
+              MANAGE
             </p>
-            <button
-              onClick={() => setProductsOpen(!productsOpen)}
-              className={`flex w-full items-center justify-between rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
-                pathname.startsWith("/seller/products")
-                  ? "text-white"
-                  : "text-slate-300 hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <span className="flex items-center gap-3">
-                <Package size={18} />
-                Products
-              </span>
-              <ChevronDown
-                size={16}
-                className={`transition-transform duration-200 ${
-                  productsOpen ? "rotate-180 text-[#d4af37]" : ""
-                }`}
-              />
-            </button>
 
-            {productsOpen && (
-              <div className="ml-9 mt-1 space-y-1 border-l-2 border-white/10 pl-3">
-                <Link
-                  href="/seller/products"
-                  className={`block rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    isNavActive("/seller/products")
-                      ? "font-semibold text-[#d4af37]"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  All Products
-                </Link>
-                <Link
-                  href="/seller/products/add"
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
-                    isNavActive("/seller/products/add")
-                      ? "font-semibold text-[#d4af37]"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  <span className="text-[#d4af37]">+</span> Add New Product
-                </Link>
-              </div>
-            )}
+            {/* Products Accordion */}
+            <div>
+              <button
+                onClick={() => setProductsOpen(!productsOpen)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: 12,
+                  border: "none",
+                  background: pathname.startsWith("/seller/products") ? "rgba(255,255,255,0.05)" : "transparent",
+                  color: pathname.startsWith("/seller/products") ? "#ffffff" : "rgba(255,255,255,0.5)",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Package size={16} color={pathname.startsWith("/seller/products") ? "#d4af37" : "rgba(255,255,255,0.4)"} />
+                  <span>Products</span>
+                </div>
+                <ChevronDown
+                  size={14}
+                  style={{
+                    transform: productsOpen ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s",
+                    color: productsOpen ? "#d4af37" : "rgba(255,255,255,0.3)",
+                  }}
+                />
+              </button>
 
-            <NavItem href="/seller/orders" icon={ShoppingBag} label="Orders" />
-            <NavItem href="/seller/customers" icon={Users} label="Customers" />
-            <NavItem href="/seller/reviews" icon={Star} label="Reviews" />
+              {productsOpen && (
+                <div style={{ marginLeft: 24, marginTop: 4, paddingLeft: 12, borderLeft: "1px solid rgba(255,255,255,0.1)", display: "flex", flexDirection: "column", gap: 2 }}>
+                  <Link
+                    href="/seller/products"
+                    style={{
+                      display: "block",
+                      padding: "6px 10px",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: isNavActive("/seller/products") ? 700 : 500,
+                      color: isNavActive("/seller/products") ? "#d4af37" : "rgba(255,255,255,0.45)",
+                      textDecoration: "none",
+                    }}
+                  >
+                    All Products
+                  </Link>
+                  <Link
+                    href="/seller/products/add"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      padding: "6px 10px",
+                      borderRadius: 8,
+                      fontSize: 12,
+                      fontWeight: isNavActive("/seller/products/add") ? 700 : 500,
+                      color: isNavActive("/seller/products/add") ? "#d4af37" : "rgba(255,255,255,0.45)",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <span style={{ color: "#d4af37", fontWeight: 800 }}>+</span> Add New Product
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <NavItem href="/seller/orders" icon={ShoppingBag} label="Orders" active={isNavActive("/seller/orders")} />
+            <NavItem href="/seller/customers" icon={Users} label="Customers" active={isNavActive("/seller/customers")} />
+            <NavItem href="/seller/reviews" icon={Star} label="Reviews" active={isNavActive("/seller/reviews")} />
           </div>
 
-          <div className="space-y-1">
-            <p className="px-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-              Store
+          {/* Section: STORE */}
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(255,255,255,0.22)", textTransform: "uppercase", padding: "0 10px", marginBottom: 6 }}>
+              STORE
             </p>
-            <NavItem href="/seller/coupons" icon={Ticket} label="Coupons" />
-            <NavItem href="/seller/banners" icon={ImageIcon} label="Banners" />
-            <NavItem href="/seller/pages" icon={FileText} label="Pages" />
-            <NavItem href="/seller/blog" icon={BookOpen} label="Blog Posts" />
+            <NavItem href="/seller/coupons" icon={Ticket} label="Coupons" active={isNavActive("/seller/coupons")} />
+            <NavItem href="/seller/banners" icon={ImageIcon} label="Banners" active={isNavActive("/seller/banners")} />
+            <NavItem href="/seller/pages" icon={FileText} label="Pages" active={isNavActive("/seller/pages")} />
+            <NavItem href="/seller/blog" icon={BookOpen} label="Blog Posts" active={isNavActive("/seller/blog")} />
           </div>
 
-          <div className="space-y-1">
-            <p className="px-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">
-              Settings
+          {/* Section: SETTINGS */}
+          <div style={{ marginBottom: 20 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.18em", color: "rgba(255,255,255,0.22)", textTransform: "uppercase", padding: "0 10px", marginBottom: 6 }}>
+              SETTINGS
             </p>
-            <NavItem href="/seller/settings" icon={Settings} label="Store Settings" />
-            <NavItem href="/seller/payments" icon={CreditCard} label="Payment Methods" />
-            <NavItem href="/seller/shipping" icon={Truck} label="Shipping" />
-            <NavItem href="/seller/roles" icon={UserCheck} label="Admins & Roles" />
-            <NavItem href="/seller/activity" icon={Activity} label="Activity Logs" />
+            <NavItem href="/seller/settings" icon={Settings} label="Store Settings" active={isNavActive("/seller/settings")} />
+            <NavItem href="/seller/payments" icon={CreditCard} label="Payment Methods" active={isNavActive("/seller/payments")} />
+            <NavItem href="/seller/shipping" icon={Truck} label="Shipping" active={isNavActive("/seller/shipping")} />
+            <NavItem href="/seller/roles" icon={UserCheck} label="Admins & Roles" active={isNavActive("/seller/roles")} />
+            <NavItem href="/seller/activity" icon={Activity} label="Activity Logs" active={isNavActive("/seller/activity")} />
           </div>
         </div>
 
-        <div className="border-t border-white/10 p-4">
-          <div className="rounded-2xl border border-[#c9a84c]/30 bg-gradient-to-b from-[#c9a84c]/10 to-transparent p-4 text-center">
-            <div className="mb-2 flex justify-center text-[#d4af37]">
-              <Headphones size={22} />
+        {/* User Profile & Sign Out */}
+        <div style={{ padding: 12, borderTop: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, background: "rgba(255,255,255,0.04)", marginBottom: 4 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 99, background: "linear-gradient(135deg,#d4af37,#a07c2e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#000", flexShrink: 0 }}>
+              {initial}
             </div>
-            <h4 className="text-sm font-semibold text-white">Need Help?</h4>
-            <p className="mb-3 mt-1 text-xs text-slate-400">
-              Manage your store workspace here.
-            </p>
-            <button className="w-full rounded-xl border border-[#c9a84c] py-2 text-xs font-semibold text-[#d4af37] transition hover:bg-[#c9a84c] hover:text-black">
-              Contact Support
-            </button>
+            <div style={{ minWidth: 0 }}>
+              <p style={{ fontSize: 12, fontWeight: 600, color: "#ffffff", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name}</p>
+              <p style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{displayRole}</p>
+            </div>
           </div>
+          <form action={logout}>
+            <button
+              type="submit"
+              style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 12px", borderRadius: 12, border: "none", background: "transparent", color: "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: 500, cursor: "pointer" }}
+            >
+              <LogOut size={15} />
+              <span>Sign Out</span>
+            </button>
+          </form>
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white px-6 shadow-sm">
-          <div className="flex items-center gap-4">
+      {/* ── Main Viewport ──────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
+        {/* Top Header */}
+        <header
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 30,
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            justify: "space-between",
+            padding: "0 24px",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            background: "rgba(10,10,15,0.96)",
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
             <button
               onClick={() => setSidebarOpen(true)}
-              className="p-2 text-slate-600 hover:text-slate-900 lg:hidden"
-              aria-label="Open menu"
+              style={{ color: "rgba(255,255,255,0.4)", background: "none", border: "none", cursor: "pointer", display: "flex" }}
+              className="lg:!hidden"
             >
-              <Menu size={22} />
+              <Menu size={20} />
             </button>
-            <h1 className="font-sans text-xl font-bold tracking-tight text-slate-900">
+            <h1 style={{ fontSize: 16, fontWeight: 700, color: "#ffffff", letterSpacing: "-0.01em", margin: 0 }}>
               Seller Workspace
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <Link
               href="/"
               target="_blank"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                borderRadius: 10,
+                border: "1px solid rgba(255,255,255,0.1)",
+                padding: "6px 12px",
+                fontSize: 12,
+                color: "rgba(255,255,255,0.5)",
+                textDecoration: "none",
+              }}
             >
               <span>View Store</span>
-              <ExternalLink size={14} />
+              <ExternalLink size={12} />
             </Link>
 
-            <button className="relative p-2 text-slate-600 transition hover:text-slate-900" aria-label="Notifications">
-              <Bell size={20} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-amber-500 ring-2 ring-white" />
+            <button style={{ position: "relative", background: "none", border: "none", cursor: "pointer", color: "rgba(255,255,255,0.4)", display: "flex" }}>
+              <Bell size={18} />
+              <span style={{ position: "absolute", top: 1, right: 1, width: 6, height: 6, borderRadius: 99, background: "#f59e0b" }} />
             </button>
 
-            <div className="flex items-center gap-3 border-l border-slate-200 pl-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
-                {user.name.charAt(0).toUpperCase()}
+            <div style={{ display: "flex", alignItems: "center", gap: 10, paddingLeft: 12, borderLeft: "1px solid rgba(255,255,255,0.08)" }}>
+              <div style={{ width: 34, height: 34, borderRadius: 99, background: "linear-gradient(135deg,#d4af37,#a07c2e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 800, color: "#000" }}>
+                {initial}
               </div>
-              <div className="hidden text-left sm:block">
-                <span className="block text-xs font-bold leading-tight text-slate-900">
+              <div style={{ display: "none" }} className="sm-show">
+                <span style={{ display: "block", fontSize: 12, fontWeight: 700, color: "#ffffff" }}>
                   {user.name}
                 </span>
-                <span className="block text-[11px] leading-tight text-slate-500">
+                <span style={{ display: "block", fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
                   {displayRole}
                 </span>
               </div>
-              <ChevronDown size={14} className="text-slate-400" />
             </div>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-7xl flex-1 p-6 md:p-8">
+        {/* Page Content */}
+        <main style={{ flex: 1, overflowY: "auto" }}>
           {children}
         </main>
       </div>
@@ -245,17 +337,32 @@ function NavItem({
   href,
   icon: Icon,
   label,
+  active = false,
 }: {
   href: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: React.ComponentType<{ size?: number; color?: string }>;
   label: string;
+  active?: boolean;
 }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-white/5 hover:text-white"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "9px 12px",
+        borderRadius: 12,
+        marginBottom: 2,
+        textDecoration: "none",
+        fontSize: 13,
+        fontWeight: active ? 700 : 500,
+        color: active ? "#ffffff" : "rgba(255,255,255,0.5)",
+        background: active ? "rgba(255,255,255,0.05)" : "transparent",
+        transition: "all 0.15s",
+      }}
     >
-      <Icon size={18} />
+      <Icon size={16} color={active ? "#d4af37" : "rgba(255,255,255,0.4)"} />
       <span>{label}</span>
     </Link>
   );

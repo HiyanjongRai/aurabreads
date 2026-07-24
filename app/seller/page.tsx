@@ -4,7 +4,7 @@ import Link from 'next/link';
 import {
   DollarSign, ShoppingBag, Package, Users,
   PlusCircle, TrendingUp, TrendingDown, ArrowUpRight,
-  Clock, CheckCircle, AlertTriangle,
+  Clock, CheckCircle, AlertTriangle, Sparkles,
 } from 'lucide-react';
 
 const sampleProducts = [
@@ -20,13 +20,32 @@ const recentOrders = [
   { id: '#SL-439', customer: 'Sushma T.', amount: 'NPR 4,400', status: 'shipped',   time: '8h ago' },
 ];
 
-const statusStyle: Record<string, string> = {
-  Active:    'bg-emerald-50 text-emerald-700',
-  'Low Stock': 'bg-amber-50 text-amber-700',
-  Archived:  'bg-slate-100 text-slate-500',
-  delivered: 'bg-emerald-500/15 text-emerald-400',
-  pending:   'bg-amber-500/15 text-amber-400',
-  shipped:   'bg-blue-500/15 text-blue-400',
+const cardStyle: React.CSSProperties = {
+  background: '#161622',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 20,
+};
+
+const statusBadge = (status: string): React.CSSProperties => {
+  const map: Record<string, { bg: string; color: string }> = {
+    Active:     { bg: 'rgba(34,197,94,0.15)',  color: '#4ade80' },
+    'Low Stock': { bg: 'rgba(245,158,11,0.15)',  color: '#fbbf24' },
+    delivered:  { bg: 'rgba(34,197,94,0.15)',  color: '#4ade80' },
+    pending:    { bg: 'rgba(245,158,11,0.15)',  color: '#fbbf24' },
+    shipped:    { bg: 'rgba(99,102,241,0.15)',  color: '#818cf8' },
+  };
+  const s = map[status] ?? { bg: 'rgba(255,255,255,0.1)', color: '#fff' };
+  return {
+    background: s.bg,
+    color: s.color,
+    borderRadius: 99,
+    padding: '3px 10px',
+    fontSize: 11,
+    fontWeight: 600,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 4,
+  };
 };
 
 export default async function SellerDashboardPage() {
@@ -34,108 +53,127 @@ export default async function SellerDashboardPage() {
   if (!user) redirect('/login');
   if (user.role !== 'SELLER' && user.role !== 'ADMIN') redirect('/dashboard');
 
-  const firstName = user.name.split(' ')[0];
+  const firstName = user.name ? user.name.split(' ')[0] : 'Seller';
+
+  const stats = [
+    { label: 'Total Revenue',   value: 'NPR 12,450', change: '+14.2%', up: true,  icon: DollarSign,  iconBg: 'rgba(212,175,55,0.15)',  iconColor: '#d4af37' },
+    { label: 'Total Orders',    value: '384',         change: '+8.1%',  up: true,  icon: ShoppingBag, iconBg: 'rgba(99,102,241,0.15)', iconColor: '#818cf8' },
+    { label: 'Active Products', value: '42',          change: '+4',     up: true,  icon: Package,     iconBg: 'rgba(34,197,94,0.15)',  iconColor: '#4ade80' },
+    { label: 'Customers',       value: '1,280',       change: '+18.6%', up: true,  icon: Users,       iconBg: 'rgba(236,72,153,0.15)', iconColor: '#f472b6' },
+  ];
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Welcome Banner */}
-      <div className="flex flex-col gap-4 rounded-3xl p-8 text-white shadow-xl sm:flex-row sm:items-center sm:justify-between"
-        style={{ background: 'linear-gradient(135deg, #111111 0%, #1c1508 100%)', border: '1px solid rgba(212,175,55,0.2)' }}>
-        <div className="space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#d4af37]">
-            Seller Portal
+    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1400 }}>
+
+      {/* ── Welcome Banner ───────────────────────────────────────────────── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #1c1829 0%, #241c10 100%)',
+        border: '1px solid rgba(212,175,55,0.25)',
+        borderRadius: 24,
+        padding: '28px 32px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: 20,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+      }}>
+        <div>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#d4af37', textTransform: 'uppercase' }}>
+            SELLER PORTAL
           </span>
-          <h1 className="font-serif text-3xl font-light tracking-tight text-white">
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', margin: '6px 0 4px 0' }}>
             Welcome back, {firstName}!
           </h1>
-          <p className="text-xs text-slate-400 max-w-md">
-            Manage your store, track inventory, and grow your catalog.
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+            Manage your catalog, track store orders, and expand your inventory.
           </p>
         </div>
+
         <Link
           href="/seller/products/add"
-          className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3.5 text-xs font-bold text-black shadow-lg transition hover:shadow-xl shrink-0"
-          style={{ background: 'linear-gradient(135deg, #d4af37, #a07c2e)' }}
+          style={{
+            padding: '12px 24px',
+            borderRadius: 14,
+            background: 'linear-gradient(135deg, #d4af37, #a07c2e)',
+            color: '#000000',
+            fontSize: 13,
+            fontWeight: 700,
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            boxShadow: '0 4px 14px rgba(212,175,55,0.3)',
+          }}
         >
-          <PlusCircle size={18} />
+          <PlusCircle size={16} />
           <span>Add New Product</span>
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: 'Total Revenue',   value: 'NPR 12,450', change: '+14.2%', up: true,  icon: DollarSign },
-          { label: 'Total Orders',    value: '384',         change: '+8.1%',  up: true,  icon: ShoppingBag },
-          { label: 'Active Products', value: '42',          change: '+4',     up: true,  icon: Package },
-          { label: 'Customers',       value: '1,280',       change: '+18.6%', up: true,  icon: Users },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-500">{item.label}</span>
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#c9a84c]/10 text-[#a07c2e]">
-                <item.icon size={20} />
+      {/* ── Stats Grid ──────────────────────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
+        {stats.map((s) => (
+          <div key={s.label} style={{ ...cardStyle, padding: '20px 24px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+              <div style={{ width: 42, height: 42, borderRadius: 12, background: s.iconBg, color: s.iconColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <s.icon size={19} />
               </div>
-            </div>
-            <div className="mt-4 flex items-baseline justify-between">
-              <span className="text-2xl font-bold text-slate-900">{item.value}</span>
-              <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${item.up ? 'text-emerald-600' : 'text-red-500'}`}>
-                {item.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-                {item.change}
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 700, color: s.up ? '#4ade80' : '#f87171' }}>
+                {s.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                {s.change}
               </span>
             </div>
+            <p style={{ fontSize: 26, fontWeight: 800, color: '#ffffff', margin: 0, letterSpacing: '-0.02em' }}>{s.value}</p>
+            <p style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 4 }}>{s.label}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      {/* ── Products Table + Orders Panel ────────────────────────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 20 }}>
+        
         {/* Products Table */}
-        <div className="xl:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-100 p-6">
+        <div style={{ ...cardStyle, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
             <div>
-              <h2 className="font-sans text-base font-semibold text-slate-900">Products</h2>
-              <p className="text-xs text-slate-500">Your current catalog</p>
+              <h2 style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', margin: 0 }}>Products Catalog</h2>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', margin: '2px 0 0 0' }}>Your listed items</p>
             </div>
-            <Link
-              href="/seller/products"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#a07c2e] hover:text-[#c9a84c] transition"
-            >
-              View All <ArrowUpRight size={14} />
+            <Link href="/seller/products/add" style={{ fontSize: 12, fontWeight: 600, color: '#d4af37', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              Add Product <ArrowUpRight size={13} />
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="border-b border-slate-100 bg-slate-50 text-slate-500 font-bold uppercase tracking-wider">
-                <tr>
-                  <th className="px-6 py-3">Product</th>
-                  <th className="px-6 py-3">SKU</th>
-                  <th className="px-6 py-3 hidden sm:table-cell">Category</th>
-                  <th className="px-6 py-3">Price</th>
-                  <th className="px-6 py-3 hidden md:table-cell">Stock</th>
-                  <th className="px-6 py-3">Status</th>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.35)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <th style={{ padding: '14px 24px' }}>Product</th>
+                  <th style={{ padding: '14px 24px' }}>SKU</th>
+                  <th style={{ padding: '14px 24px' }}>Category</th>
+                  <th style={{ padding: '14px 24px' }}>Price</th>
+                  <th style={{ padding: '14px 24px' }}>Stock</th>
+                  <th style={{ padding: '14px 24px' }}>Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
-                {sampleProducts.map((p) => (
-                  <tr key={p.id} className="hover:bg-slate-50/80 transition">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#d4af37]/10 text-[#a07c2e] font-bold text-xs flex-shrink-0">
+              <tbody>
+                {sampleProducts.map((p, i) => (
+                  <tr key={p.id} style={{ borderBottom: i < sampleProducts.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none' }}>
+                    <td style={{ padding: '14px 24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(212,175,55,0.12)', color: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>
                           {p.name[0]}
                         </div>
-                        <span className="font-semibold text-slate-900 truncate max-w-[120px]">{p.name}</span>
+                        <span style={{ fontWeight: 600, color: '#ffffff' }}>{p.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-mono text-slate-400">{p.sku}</td>
-                    <td className="px-6 py-4 hidden sm:table-cell">{p.category}</td>
-                    <td className="px-6 py-4 font-bold text-slate-900">{p.price}</td>
-                    <td className="px-6 py-4 hidden md:table-cell">{p.stock} units</td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${statusStyle[p.status]}`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${p.status === 'Active' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                    <td style={{ padding: '14px 24px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)' }}>{p.sku}</td>
+                    <td style={{ padding: '14px 24px', color: 'rgba(255,255,255,0.6)' }}>{p.category}</td>
+                    <td style={{ padding: '14px 24px', fontWeight: 700, color: '#ffffff' }}>{p.price}</td>
+                    <td style={{ padding: '14px 24px', color: 'rgba(255,255,255,0.6)' }}>{p.stock} units</td>
+                    <td style={{ padding: '14px 24px' }}>
+                      <span style={statusBadge(p.status)}>
                         {p.status}
                       </span>
                     </td>
@@ -146,32 +184,36 @@ export default async function SellerDashboardPage() {
           </div>
         </div>
 
-        {/* Recent Orders */}
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between border-b border-slate-100 p-6">
-            <h2 className="text-sm font-semibold text-slate-900">Recent Orders</h2>
-            <Link href="/seller/orders" className="text-xs font-bold text-[#a07c2e] hover:text-[#c9a84c] flex items-center gap-1 transition">
-              View all <ArrowUpRight size={12} />
+        {/* Recent Orders Panel */}
+        <div style={{ ...cardStyle, overflow: 'hidden' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', margin: 0 }}>Recent Orders</h2>
+            <Link href="/seller/orders" style={{ fontSize: 12, fontWeight: 600, color: '#d4af37', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
+              View all <ArrowUpRight size={13} />
             </Link>
           </div>
-          <div className="divide-y divide-slate-100">
-            {recentOrders.map((o) => (
-              <div key={o.id} className="flex items-center justify-between px-6 py-4 hover:bg-slate-50/80 transition">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-500">
+
+          <div>
+            {recentOrders.map((o, i) => (
+              <div key={o.id} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '16px 24px', borderBottom: i < recentOrders.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 99, background: 'rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.6)' }}>
                     {o.customer[0]}
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-slate-900">{o.customer}</p>
-                    <p className="text-[11px] text-slate-400">{o.id} · {o.time}</p>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#ffffff', margin: 0 }}>{o.customer}</p>
+                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', margin: '2px 0 0 0' }}>{o.id} · {o.time}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-semibold text-slate-900">{o.amount}</p>
-                  <span className={`mt-0.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${statusStyle[o.status]}`}>
-                    {o.status === 'delivered' && <CheckCircle size={9} />}
-                    {o.status === 'pending'   && <Clock size={9} />}
-                    {o.status === 'shipped'   && <AlertTriangle size={9} />}
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', margin: 0 }}>{o.amount}</p>
+                  <span style={statusBadge(o.status)}>
+                    {o.status === 'delivered' && <CheckCircle size={11} />}
+                    {o.status === 'pending'   && <Clock size={11} />}
+                    {o.status === 'shipped'   && <AlertTriangle size={11} />}
                     {o.status}
                   </span>
                 </div>
@@ -179,6 +221,7 @@ export default async function SellerDashboardPage() {
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );

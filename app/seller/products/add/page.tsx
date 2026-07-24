@@ -15,7 +15,41 @@ import {
   AlignRight,
   Link as LinkIcon,
   Check,
+  Package,
+  DollarSign,
+  Tag,
+  Sparkles,
+  Layers,
+  HelpCircle,
+  Eye,
+  ArrowLeft,
 } from 'lucide-react';
+
+const cardStyle: React.CSSProperties = {
+  background: '#161622',
+  border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: 20,
+  padding: '24px 28px',
+};
+
+const labelStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: 12,
+  fontWeight: 600,
+  color: 'rgba(255,255,255,0.6)',
+  marginBottom: 8,
+};
+
+const inputContainerStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(255,255,255,0.1)',
+  borderRadius: 12,
+  padding: '11px 14px',
+  color: '#ffffff',
+  fontSize: 14,
+  outline: 'none',
+  width: '100%',
+};
 
 export default function AddNewProductPage() {
   const [shortDesc, setShortDesc] = useState('');
@@ -30,420 +64,283 @@ export default function AddNewProductPage() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div style={{ padding: '32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, color: '#ffffff' }}>
+      
       {/* Toast Notification */}
       {savedStatus && (
-        <div className="fixed top-24 right-8 z-50 flex items-center gap-3 rounded-2xl bg-emerald-900 px-6 py-4 text-white shadow-2xl animate-slide-left">
-          <Check size={20} className="text-emerald-400" />
-          <span className="text-sm font-semibold">{savedStatus}</span>
+        <div style={{
+          position: 'fixed', top: 80, right: 32, zIndex: 50,
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
+          border: '1px solid #10b981',
+          borderRadius: 14, padding: '14px 20px', color: '#ffffff',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+        }}>
+          <Check size={18} color="#34d399" />
+          <span style={{ fontSize: 13, fontWeight: 700 }}>{savedStatus}</span>
         </div>
       )}
 
       {/* Header & Breadcrumb */}
-      <div>
-        <h1 className="font-serif text-3xl font-light text-slate-900">Add New Product</h1>
-        <div className="flex items-center gap-2 text-xs text-slate-500 mt-1">
-          <Link href="/seller" className="hover:text-slate-900 transition">Dashboard</Link>
-          <span>›</span>
-          <Link href="/seller/products" className="hover:text-slate-900 transition">Products</Link>
-          <span>›</span>
-          <span className="text-slate-900 font-medium">Add New Product</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <Link href="/seller" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+              <ArrowLeft size={16} />
+            </Link>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: '#d4af37', textTransform: 'uppercase' }}>
+              SELLER CATALOG
+            </span>
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>
+            Add New Product
+          </h1>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            type="button"
+            style={{
+              padding: '10px 20px',
+              borderRadius: 12,
+              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(255,255,255,0.04)',
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Save Draft
+          </button>
+          <button
+            type="button"
+            onClick={handlePublish}
+            style={{
+              padding: '10px 24px',
+              borderRadius: 12,
+              border: 'none',
+              background: 'linear-gradient(135deg, #d4af37, #a07c2e)',
+              color: '#000000',
+              fontSize: 13,
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              boxShadow: '0 4px 14px rgba(212,175,55,0.3)',
+            }}
+          >
+            <Sparkles size={16} />
+            <span>Publish Product</span>
+          </button>
         </div>
       </div>
 
-      <form onSubmit={handlePublish} className="grid gap-8 lg:grid-cols-12">
-        {/* ─── Left Main Column ───────────────────────────────────────────── */}
-        <div className="lg:col-span-8 space-y-6">
+      <form onSubmit={handlePublish} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+        
+        {/* ── Left Column (Main Information) ─────────────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24, gridColumn: 'span 2' }}>
+          
           {/* Card 1: Product Information */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm space-y-6">
-            <h2 className="font-sans text-lg font-semibold text-slate-900 border-b border-slate-100 pb-4">
-              Product Information
-            </h2>
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
+              <Package size={18} color="#d4af37" />
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Product Details</h2>
+            </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Product Name <span className="text-amber-600">*</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <div>
+                <label style={labelStyle}>
+                  Product Name <span style={{ color: '#f87171' }}>*</span>
                 </label>
                 <input
                   type="text"
+                  placeholder="e.g. Royal Kundan Gold Choker Necklace Set"
                   required
-                  placeholder="Enter product name"
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
+                  style={inputContainerStyle}
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  SKU <span className="text-amber-600">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter SKU"
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                />
-                <p className="text-[11px] text-slate-400">Unique stock keeping unit</p>
-              </div>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Category <span className="text-amber-600">*</span>
-                </label>
-                <select
-                  required
-                  defaultValue=""
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm text-slate-800 outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                >
-                  <option value="" disabled>Select category</option>
-                  <option value="earrings">Earrings</option>
-                  <option value="necklaces">Necklaces</option>
-                  <option value="bracelets">Bracelets</option>
-                  <option value="rings">Rings</option>
-                  <option value="accessories">Accessories</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Collection
-                </label>
-                <select
-                  defaultValue=""
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm text-slate-800 outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                >
-                  <option value="" disabled>Select collection</option>
-                  <option value="summer">Summer Edit</option>
-                  <option value="bridal">Bridal Collection</option>
-                  <option value="gift">Gift Sets</option>
-                  <option value="timeless">Timeless Elegance</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Price <span className="text-amber-600">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-4 text-sm text-slate-400 font-semibold">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    placeholder="0.00"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-8 pr-4 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Compare at Price
-                </label>
-                <div className="relative flex items-center">
-                  <span className="absolute left-4 text-sm text-slate-400 font-semibold">$</span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-8 pr-4 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                  />
-                </div>
-                <p className="text-[11px] text-slate-400">Original price (for discounts)</p>
-              </div>
-            </div>
-
-            {/* Short Description */}
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Short Description <span className="text-amber-600">*</span>
-                </label>
-                <span className="text-xs text-slate-400">{shortDesc.length}/160</span>
-              </div>
-              <textarea
-                required
-                maxLength={160}
-                rows={3}
-                value={shortDesc}
-                onChange={(e) => setShortDesc(e.target.value)}
-                placeholder="Enter a short description about the product..."
-                className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-              />
-            </div>
-
-            {/* Detailed Description Rich Text Editor */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Description <span className="text-amber-600">*</span>
-              </label>
-              <div className="rounded-xl border border-slate-200 overflow-hidden">
-                {/* Formatting Toolbar */}
-                <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-3 py-2 text-slate-600">
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Bold"><Bold size={16} /></button>
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Italic"><Italic size={16} /></button>
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Underline"><Underline size={16} /></button>
-                  <div className="h-4 w-px bg-slate-300 mx-1" />
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Bullet List"><List size={16} /></button>
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Numbered List"><ListOrdered size={16} /></button>
-                  <div className="h-4 w-px bg-slate-300 mx-1" />
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Align Left"><AlignLeft size={16} /></button>
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Align Center"><AlignCenter size={16} /></button>
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Align Right"><AlignRight size={16} /></button>
-                  <div className="h-4 w-px bg-slate-300 mx-1" />
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Insert Link"><LinkIcon size={16} /></button>
-                  <button type="button" className="p-1.5 rounded hover:bg-slate-200" title="Insert Image"><ImageIcon size={16} /></button>
-                </div>
-                <textarea
-                  required
-                  rows={6}
-                  placeholder="Write a detailed description about the product..."
-                  className="w-full bg-white p-4 text-sm outline-none"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Product Details */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 md:p-8 shadow-sm space-y-6">
-            <h2 className="font-sans text-lg font-semibold text-slate-900 border-b border-slate-100 pb-4">
-              Product Details
-            </h2>
-
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Material</label>
-                <select
-                  defaultValue=""
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm text-slate-800 outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                >
-                  <option value="" disabled>Select material</option>
-                  <option value="gold-18k">18k Gold Plated</option>
-                  <option value="silver-925">925 Sterling Silver</option>
-                  <option value="brass">Hypoallergenic Brass</option>
-                  <option value="pearl">Freshwater Pearl</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Color</label>
-                <div className="relative flex items-center">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div>
+                  <label style={labelStyle}>SKU / Code</label>
                   <input
                     type="text"
-                    placeholder="Enter color (e.g. Gold, Silver)"
-                    className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 pl-4 pr-10 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
+                    placeholder="e.g. NCK-001"
+                    style={{ ...inputContainerStyle, fontFamily: 'monospace' }}
                   />
-                  <div className="absolute right-3 h-5 w-5 rounded-full border border-slate-300 bg-[#d4af37]" />
+                </div>
+                <div>
+                  <label style={labelStyle}>Category</label>
+                  <select style={{ ...inputContainerStyle, cursor: 'pointer', background: '#1c1c2b' }}>
+                    <option value="">Select Category</option>
+                    <option value="necklaces">Necklaces & Chokers</option>
+                    <option value="earrings">Earrings & Studs</option>
+                    <option value="bracelets">Bracelets & Bangles</option>
+                    <option value="rings">Rings</option>
+                    <option value="anklets">Anklets</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <label style={{ ...labelStyle, margin: 0 }}>Short Description</label>
+                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{shortDesc.length}/160</span>
+                </div>
+                <textarea
+                  rows={2}
+                  maxLength={160}
+                  value={shortDesc}
+                  onChange={(e) => setShortDesc(e.target.value)}
+                  placeholder="Brief 1-2 sentence summary for search and cards…"
+                  style={{ ...inputContainerStyle, resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Rich Text Editor */}
+              <div>
+                <label style={labelStyle}>Full Description & Care Instructions</label>
+                <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' }}>
+                    {[Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, LinkIcon].map((Icon, idx) => (
+                      <button key={idx} type="button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', padding: 6, borderRadius: 6, cursor: 'pointer', display: 'flex' }}>
+                        <Icon size={14} />
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    rows={5}
+                    placeholder="Provide full description, specifications, dimensions, and care instructions…"
+                    style={{ ...inputContainerStyle, border: 'none', background: 'transparent', borderRadius: 0, resize: 'vertical' }}
+                  />
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Finish</label>
-                <select
-                  defaultValue=""
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm text-slate-800 outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-                >
-                  <option value="" disabled>Select finish</option>
-                  <option value="polished">High Polish</option>
-                  <option value="matte">Matte / Brushed</option>
-                  <option value="textured">Hammered Texture</option>
+          {/* Card 2: Pricing & Inventory */}
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
+              <DollarSign size={18} color="#d4af37" />
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Pricing & Inventory</h2>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+              <div>
+                <label style={labelStyle}>Regular Price (NPR)</label>
+                <input type="number" placeholder="e.g. 3500" style={inputContainerStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Sale Price (NPR)</label>
+                <input type="number" placeholder="e.g. 2800" style={inputContainerStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Stock Quantity</label>
+                <input type="number" placeholder="e.g. 25" defaultValue={10} style={inputContainerStyle} />
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Images */}
+          <div style={cardStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
+              <ImageIcon size={18} color="#d4af37" />
+              <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Product Images</h2>
+            </div>
+
+            {/* Dropzone */}
+            <div style={{
+              border: '2px dashed rgba(212,175,55,0.3)',
+              borderRadius: 16,
+              padding: '36px 20px',
+              textAlign: 'center',
+              background: 'rgba(212,175,55,0.03)',
+              cursor: 'pointer',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 10,
+            }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(212,175,55,0.12)', color: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <UploadCloud size={24} />
+              </div>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', margin: 0 }}>
+                  Click to upload or drag & drop images
+                </p>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+                  SVG, PNG, JPG or WEBP (Max 5MB per file)
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Right Column (Sidebar Settings) ───────────────────────────── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          
+          {/* Status Card */}
+          <div style={cardStyle}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Publish Status
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={labelStyle}>Status</label>
+                <select style={{ ...inputContainerStyle, background: '#1c1c2b', cursor: 'pointer' }}>
+                  <option value="active">Active (Published)</option>
+                  <option value="draft">Draft (Hidden)</option>
+                  <option value="archived">Archived</option>
                 </select>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Style</label>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Featured Product</span>
                 <input
-                  type="text"
-                  placeholder="Enter style (e.g. Minimal, Boho)"
-                  className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
+                  type="checkbox"
+                  checked={featured}
+                  onChange={(e) => setFeatured(e.target.checked)}
+                  style={{ width: 18, height: 18, accentColor: '#d4af37', cursor: 'pointer' }}
                 />
               </div>
             </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">Tags</label>
-              <input
-                type="text"
-                placeholder="Enter tags and press Enter..."
-                className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-4 text-sm outline-none transition focus:border-amber-500 focus:bg-white focus:ring-2 focus:ring-amber-200"
-              />
-              <p className="text-[11px] text-slate-400">Add relevant tags to help customers find your product</p>
-            </div>
-          </div>
-        </div>
-
-        {/* ─── Right Sidebar Column ────────────────────────────────────────── */}
-        <div className="lg:col-span-4 space-y-6">
-          {/* Card: Product Images */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <h2 className="font-sans text-base font-semibold text-slate-900 border-b border-slate-100 pb-3">
-              Product Images
-            </h2>
-
-            {/* Dropzone */}
-            <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-6 text-center transition hover:border-amber-500 hover:bg-amber-50/20 cursor-pointer group">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500 group-hover:bg-amber-100 group-hover:text-amber-700 transition">
-                <UploadCloud size={24} />
-              </div>
-              <p className="mt-3 text-xs font-semibold text-slate-800">
-                Drag & drop images here
-              </p>
-              <p className="text-xs text-amber-700 font-medium">or click to browse</p>
-              <p className="mt-2 text-[10px] text-slate-400">
-                Upload up to 8 images (PNG, JPG, WEBP)<br />
-                Recommended size: 1200 x 1200px
-              </p>
-            </div>
-
-            {/* Thumbnail Placeholders Grid (8 slots) */}
-            <div className="grid grid-cols-4 gap-2 pt-2">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((slot) => (
-                <div
-                  key={slot}
-                  className="flex aspect-square items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-300 hover:border-amber-400 hover:text-amber-500 transition cursor-pointer"
-                >
-                  <ImageIcon size={18} />
-                </div>
-              ))}
-            </div>
           </div>
 
-          {/* Card: Product Status */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <h2 className="font-sans text-base font-semibold text-slate-900 border-b border-slate-100 pb-3">
-              Product Status
-            </h2>
+          {/* Specifications Card */}
+          <div style={cardStyle}>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Jewelry Specifications
+            </h3>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Status <span className="text-amber-600">*</span>
-              </label>
-              <select
-                defaultValue="active"
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs text-slate-800 font-semibold outline-none focus:border-amber-500 focus:bg-white"
-              >
-                <option value="active">🟢 Active</option>
-                <option value="draft">🟡 Draft</option>
-                <option value="archived">🔴 Archived</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                Visibility <span className="text-amber-600">*</span>
-              </label>
-              <select
-                defaultValue="visible"
-                className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs text-slate-800 font-semibold outline-none focus:border-amber-500 focus:bg-white"
-              >
-                <option value="visible">Visible</option>
-                <option value="hidden">Hidden</option>
-              </select>
-            </div>
-
-            {/* Toggle Switch: Featured Product */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <div>
-                <span className="block text-xs font-semibold text-slate-800">Featured Product</span>
-                <span className="block text-[11px] text-slate-400">Show this product on homepage</span>
+                <label style={labelStyle}>Material</label>
+                <select style={{ ...inputContainerStyle, background: '#1c1c2b' }}>
+                  <option>Gold Plated</option>
+                  <option>Solid Gold</option>
+                  <option>Sterling Silver</option>
+                  <option>Brass / Alloy</option>
+                  <option>Beaded</option>
+                </select>
               </div>
-              <button
-                type="button"
-                onClick={() => setFeatured(!featured)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  featured ? 'bg-[#c9a84c]' : 'bg-slate-200'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    featured ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
+
+              <div>
+                <label style={labelStyle}>Color / Finish</label>
+                <input type="text" placeholder="e.g. Yellow Gold / Antique" style={inputContainerStyle} />
+              </div>
+
+              <div>
+                <label style={labelStyle}>Style / Collection</label>
+                <input type="text" placeholder="e.g. Traditional Bridal" style={inputContainerStyle} />
+              </div>
             </div>
           </div>
 
-          {/* Card: Inventory */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <h2 className="font-sans text-base font-semibold text-slate-900 border-b border-slate-100 pb-3">
-              Inventory
-            </h2>
-
-            {/* Toggle Switch: Track Inventory */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-800">Track Inventory</span>
-              <button
-                type="button"
-                onClick={() => setTrackInventory(!trackInventory)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  trackInventory ? 'bg-[#c9a84c]' : 'bg-slate-200'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    trackInventory ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {trackInventory && (
-              <>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Quantity <span className="text-amber-600">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue="0"
-                    required
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Low Stock Alert
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue="5"
-                    className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3.5 text-xs text-slate-900 outline-none focus:border-amber-500 focus:bg-white"
-                  />
-                  <p className="text-[11px] text-slate-400">You&apos;ll be notified when stock is below this level</p>
-                </div>
-              </>
-            )}
-          </div>
         </div>
 
-        {/* ─── Bottom Actions Bar ─────────────────────────────────────────── */}
-        <div className="lg:col-span-12 flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-slate-200">
-          <Link
-            href="/seller/products"
-            className="w-full sm:w-auto text-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 hover:border-slate-400"
-          >
-            Cancel
-          </Link>
-          <button
-            type="button"
-            className="w-full sm:w-auto rounded-xl border-2 border-[#c9a84c] px-6 py-3 text-xs font-bold text-[#a07c2e] transition hover:bg-[#c9a84c]/10"
-          >
-            Save as Draft
-          </button>
-          <button
-            type="submit"
-            className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#c9a84c] to-[#a07c2e] px-8 py-3 text-xs font-bold text-black shadow-lg transition hover:shadow-xl hover:from-[#d4af37] hover:to-[#b08c3e] cursor-pointer"
-          >
-            Publish Product
-          </button>
-        </div>
       </form>
     </div>
   );
