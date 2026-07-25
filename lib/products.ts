@@ -40,19 +40,26 @@ export async function getHomepageProducts(limit = 10): Promise<PublicProduct[]> 
         featured: true,
       },
     });
+    console.log(`[getHomepageProducts] Prisma returned ${products.length} active products`);
     return products;
   } catch (err) {
-    console.warn('[getHomepageProducts] Prisma connection fallback to Supabase REST:', err instanceof Error ? err.message : err);
+    console.warn('[getHomepageProducts] Prisma failed, trying Supabase REST:', err instanceof Error ? err.message : err);
   }
 
   // 2. Fallback: Fetch via Supabase REST API
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://twyrkcgwpiyeftrdlumi.supabase.co';
+    // Try service role key first (bypasses RLS), then anon key
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '';
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
-    
-    if (!url || !anonKey) return [];
+    const key = serviceKey || anonKey;
 
-    const supabase = createClient(url, anonKey);
+    if (!url || !key) {
+      console.error('[getHomepageProducts] Missing Supabase URL or key');
+      return [];
+    }
+
+    const supabase = createClient(url, key, { auth: { persistSession: false } });
     const { data, error } = await supabase
       .from('Product')
       .select('id, name, price, salePrice, images, category, shortDescription, stock, featured')
@@ -66,6 +73,7 @@ export async function getHomepageProducts(limit = 10): Promise<PublicProduct[]> 
       return [];
     }
 
+    console.log(`[getHomepageProducts] Supabase REST returned ${data?.length ?? 0} active products`);
     return (data as PublicProduct[]) || [];
   } catch (fallbackErr) {
     console.error('[getHomepageProducts] Fallback exception:', fallbackErr);

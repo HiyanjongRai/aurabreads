@@ -46,7 +46,8 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
   };
 
   // Use real DB products if available, fallback to demo items
-  const displayProducts = initialProducts.length > 0
+  const hasRealProducts = initialProducts.length > 0;
+  const displayProducts = hasRealProducts
     ? initialProducts.map((p) => ({
         id: p.id,
         name: p.name,
@@ -54,7 +55,9 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
         originalPrice: p.salePrice ? p.price : null,
         rating: 4.8,
         reviews: 42 + Math.floor(p.price % 80),
-        img: p.images[0] || "/product-earrings1.png",
+        // Use first image — Cloudinary URL, base64, or local fallback
+        img: (p.images && p.images.length > 0) ? p.images[0] : "/product-earrings1.png",
+        isCloudinary: (p.images && p.images.length > 0) ? p.images[0].startsWith('https://res.cloudinary.com') : false,
       }))
     : demoProducts.map((p) => ({
         id: p.id,
@@ -64,6 +67,7 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
         rating: p.rating,
         reviews: p.reviews,
         img: p.img,
+        isCloudinary: false,
       }));
 
   return (
@@ -110,10 +114,34 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
         <div className="ab-container">
           <div className="ab-section-header" style={{ marginBottom: '32px' }}>
             <div>
-              <h2 className="ab-section-title" style={{ textAlign: 'left', margin: 0 }}>Best Sellers</h2>
+              <h2 className="ab-section-title" style={{ textAlign: 'left', margin: 0 }}>
+                {hasRealProducts ? 'Featured Products' : 'Best Sellers'}
+              </h2>
+              {hasRealProducts && (
+                <p style={{ color: '#888', fontSize: '0.85rem', margin: '4px 0 0' }}>
+                  {initialProducts.length} product{initialProducts.length !== 1 ? 's' : ''} available
+                </p>
+              )}
             </div>
             <Link href="#" className="ab-btn-outline-sm">View All</Link>
           </div>
+
+          {!hasRealProducts && (
+            <div style={{
+              textAlign: 'center',
+              padding: '24px',
+              background: '#fff3cd',
+              borderRadius: '8px',
+              marginBottom: '24px',
+              fontSize: '0.9rem',
+              color: '#856404',
+              border: '1px solid #ffc107',
+            }}>
+              ⚠️ No products in database yet — showing demo items. Go to{' '}
+              <a href="/seller/products/add" style={{ color: '#856404', fontWeight: 600 }}>Seller → Add Product</a>{' '}
+              to add real products with Cloudinary images.
+            </div>
+          )}
 
           <div className="ab-products-grid">
             {displayProducts.map((product) => {
@@ -121,20 +149,30 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
               return (
                 <div key={product.id} className="ab-product-card">
                   <div className="ab-product-img-wrap">
-                    {product.img.startsWith('http') || product.img.startsWith('data:') || product.img.startsWith('/cat') || product.img.startsWith('/product') ? (
-                      <img
-                        src={product.img}
-                        alt={product.name}
-                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                      />
-                    ) : (
-                      <Image
-                        src={product.img}
-                        alt={product.name}
-                        width={260}
-                        height={260}
-                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                      />
+                    {/* Always use plain <img> — handles Cloudinary URLs, base64, and local paths */}
+                    <img
+                      src={product.img}
+                      alt={product.name}
+                      loading="lazy"
+                      style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/product-earrings1.png';
+                      }}
+                    />
+                    {product.isCloudinary && (
+                      <span style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        background: 'rgba(0,0,0,0.55)',
+                        color: '#fff',
+                        fontSize: '9px',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        letterSpacing: '0.5px',
+                        fontWeight: 600,
+                      }}>☁ CDN</span>
                     )}
                     <button
                       className="ab-wishlist-btn"

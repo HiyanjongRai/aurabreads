@@ -2,9 +2,9 @@ import "server-only";
 
 import crypto from "crypto";
 
-const apiKey = process.env.CLOUDINARY_API_KEY || "979236259656447";
-const apiSecret = process.env.CLOUDINARY_API_SECRET || "InP0ZbDqLEqhiFB9A2D6khWWtdw";
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || "aurabeads";
+const apiKey = process.env.CLOUDINARY_API_KEY || "115994652678237";
+const apiSecret = process.env.CLOUDINARY_API_SECRET || "l-LNv-xFzvEHUpIeTR7wLL_8lEs";
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME || "x7qchau7";
 
 /**
  * Uploads a Buffer or base64/Data URL to Cloudinary using the REST API.
