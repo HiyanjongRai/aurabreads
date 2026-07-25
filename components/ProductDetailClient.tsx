@@ -42,22 +42,16 @@ type Product = {
 
 type Props = {
   product: Product;
+  relatedProducts?: Product[];
 };
 
-const demoRelatedProducts = [
-  { id: 'demo-1', name: 'Twist Knot Earrings', price: 18.00, rating: 4.8, reviews: 128, img: '/product-earrings1.png' },
-  { id: 'demo-3', name: 'Pearl Drop Earrings', price: 16.00, rating: 4.6, reviews: 74, img: '/product-earrings3.png' },
-  { id: 'demo-4', name: 'Chain Link Bracelet', price: 22.00, rating: 4.7, reviews: 64, img: '/product-bracelet.png' },
-  { id: 'demo-5', name: 'Dainty Heart Necklace', price: 19.00, rating: 4.9, reviews: 90, img: '/product-earrings1.png' },
-  { id: 'demo-6', name: 'Teardrop Earrings', price: 17.00, rating: 4.8, reviews: 68, img: '/product-earrings2.png' },
-];
-
-export default function ProductDetailClient({ product }: Props) {
+export default function ProductDetailClient({ product, relatedProducts = [] }: Props) {
   const images = product.images && product.images.length > 0 ? product.images : ['/product-earrings2.png', '/product-earrings1.png', '/product-earrings3.png'];
   const [selectedImg, setSelectedImg] = useState<string>(images[0]);
   const [selectedColor, setSelectedColor] = useState<string>('Gold');
   const [qty, setQty] = useState<number>(1);
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
+  const [addedToast, setAddedToast] = useState<boolean>(false);
   const [openAccordions, setOpenAccordions] = useState<Record<string, boolean>>({ details: true });
 
   const toggleAccordion = (key: string) => {
@@ -84,6 +78,9 @@ export default function ProductDetailClient({ product }: Props) {
         }
         localStorage.setItem('aurabeads_cart', JSON.stringify(cartItems));
         window.dispatchEvent(new Event('aurabeads_cart_updated'));
+        
+        setAddedToast(true);
+        setTimeout(() => setAddedToast(false), 3000);
       } catch (e) {
         console.error('Add to cart error:', e);
       }
@@ -436,41 +433,77 @@ export default function ProductDetailClient({ product }: Props) {
         </div>
       </div>
 
-      {/* ── You May Also Like Section ───────────────────────────────────────── */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <h3 style={{ fontSize: 20, fontWeight: 800, color: '#111827', margin: 0 }}>You May Also Like</h3>
-          <Link href="/#categories" style={{ fontSize: 12, fontWeight: 700, color: '#d4af37', textDecoration: 'none' }}>View All</Link>
+      {/* Floating Add to Cart Toast Banner */}
+      {addedToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: 28,
+          right: 28,
+          zIndex: 9999,
+          background: 'linear-gradient(135deg, #111827 0%, #1f2937 100%)',
+          color: '#ffffff',
+          border: '1.5px solid #d4af37',
+          borderRadius: 16,
+          padding: '14px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          boxShadow: '0 12px 36px rgba(0,0,0,0.3)',
+          animation: 'slide-left 0.3s ease-out',
+        }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(212,175,55,0.2)', color: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <ShoppingBag size={15} />
+          </div>
+          <div>
+            <p style={{ fontSize: 13, fontWeight: 700, margin: 0 }}>Added to Shopping Bag!</p>
+            <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.6)', margin: '2px 0 0' }}>{qty}x {product.name}</p>
+          </div>
         </div>
+      )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
-          {demoRelatedProducts.map((rel) => (
-            <Link
-              key={rel.id}
-              href={`/product/${rel.id}`}
-              style={{
-                background: '#ffffff',
-                borderRadius: 16,
-                overflow: 'hidden',
-                border: '1px solid #f3f4f6',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
-                textDecoration: 'none',
-                color: 'inherit',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
-              <div style={{ height: 180, background: '#fcfbf9', position: 'relative' }}>
-                <img src={rel.img} alt={rel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              </div>
-              <div style={{ padding: '14px 16px' }}>
-                <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rel.name}</p>
-                <p style={{ fontSize: 13, fontWeight: 800, color: '#d4af37', margin: '4px 0 0' }}>NPR {rel.price.toFixed(2)}</p>
-              </div>
-            </Link>
-          ))}
+      {/* ── You May Also Like Section (Dynamic DB Items) ──────────────────── */}
+      {relatedProducts.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: '#111827', margin: 0 }}>You May Also Like</h3>
+            <Link href="/#categories" style={{ fontSize: 12, fontWeight: 700, color: '#d4af37', textDecoration: 'none' }}>View All</Link>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
+            {relatedProducts.map((rel) => {
+              const relImg = rel.images && rel.images.length > 0 ? rel.images[0] : '/product-earrings1.png';
+              return (
+                <Link
+                  key={rel.id}
+                  href={`/product/${rel.id}`}
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: 16,
+                    overflow: 'hidden',
+                    border: '1px solid #f3f4f6',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.03)',
+                    textDecoration: 'none',
+                    color: 'inherit',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    transition: 'transform 0.2s',
+                  }}
+                >
+                  <div style={{ height: 180, background: '#fcfbf9', position: 'relative' }}>
+                    <img src={relImg} alt={rel.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </div>
+                  <div style={{ padding: '14px 16px' }}>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{rel.name}</p>
+                    <p style={{ fontSize: 13, fontWeight: 800, color: '#d4af37', margin: '4px 0 0' }}>
+                      NPR {(rel.salePrice ?? rel.price).toFixed(2)}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );
