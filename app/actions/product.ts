@@ -112,21 +112,29 @@ export async function createProductAction(
         uploadedImageUrls.push(url);
       } catch (uploadErr) {
         console.error('[PRODUCT CREATION IMAGE UPLOAD ERROR]', uploadErr);
+        // Fallback: convert file to compressed base64 data URL
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`;
+        uploadedImageUrls.push(dataUrl);
       }
     }
   }
 
-  // Also check for base64 image strings from form preview state
+  // Check for base64 image strings from form preview state
   const base64Images = formData.getAll('imageUrls') as string[];
   for (const imgStr of base64Images) {
-    if (imgStr && imgStr.startsWith('http')) {
+    if (!imgStr) continue;
+    if (imgStr.startsWith('http')) {
       if (!uploadedImageUrls.includes(imgStr)) uploadedImageUrls.push(imgStr);
-    } else if (imgStr && imgStr.startsWith('data:image/')) {
+    } else if (imgStr.startsWith('data:image/')) {
       try {
         const url = await uploadImageToCloudinary(imgStr, 'aurabeads_products');
         if (!uploadedImageUrls.includes(url)) uploadedImageUrls.push(url);
       } catch (uploadErr) {
         console.error('[PRODUCT BASE64 UPLOAD ERROR]', uploadErr);
+        // Fail-safe: Save compressed base64 image directly so user image is never lost!
+        if (!uploadedImageUrls.includes(imgStr)) uploadedImageUrls.push(imgStr);
       }
     }
   }

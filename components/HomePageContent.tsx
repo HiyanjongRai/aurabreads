@@ -121,7 +121,7 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
               return (
                 <div key={product.id} className="ab-product-card">
                   <div className="ab-product-img-wrap">
-                    {product.img.startsWith('http') || product.img.startsWith('/cat') || product.img.startsWith('/product') ? (
+                    {product.img.startsWith('http') || product.img.startsWith('data:') || product.img.startsWith('/cat') || product.img.startsWith('/product') ? (
                       <img
                         src={product.img}
                         alt={product.name}

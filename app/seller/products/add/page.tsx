@@ -53,31 +53,70 @@ const inputContainerStyle: React.CSSProperties = {
 
 const initialState: CreateProductState = {};
 
+function compressImage(file: File, maxWidth = 1200, quality = 0.82): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement('img');
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(e.target?.result as string);
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve(dataUrl);
+      };
+      img.onerror = () => resolve(e.target?.result as string);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function AddNewProductPage() {
   const [state, formAction, isPending] = useActionState(createProductAction, initialState);
   const [shortDesc, setShortDesc] = useState('');
   const [featured, setFeatured] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
+  const [isProcessingImages, setIsProcessingImages] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const newPreviews: string[] = [...previews];
-    Array.from(files).forEach((file) => {
-      const url = URL.createObjectURL(file);
-      newPreviews.push(url);
-    });
-    setPreviews(newPreviews);
+    setIsProcessingImages(true);
+    try {
+      const compressed: string[] = [];
+      for (const file of Array.from(files)) {
+        if (file.type.startsWith('image/')) {
+          const dataUrl = await compressImage(file);
+          if (dataUrl) compressed.push(dataUrl);
+        }
+      }
+      setPreviews((prev) => [...prev, ...compressed]);
+    } catch (err) {
+      console.error('Image compression error:', err);
+    } finally {
+      setIsProcessingImages(false);
+    }
   };
 
   const removeImage = (index: number) => {
     const updated = [...previews];
-    const removed = updated.splice(index, 1);
-    if (removed[0] && removed[0].startsWith('blob:')) {
-      URL.revokeObjectURL(removed[0]);
-    }
+    updated.splice(index, 1);
     setPreviews(updated);
   };
 
@@ -354,6 +393,11 @@ export default function AddNewProductPage() {
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
               />
+
+              {/* Hidden Compressed Base64 Image Inputs */}
+              {previews.map((src, idx) => (
+                <input key={idx} type="hidden" name="imageUrls" value={src} />
+              ))}
 
               {/* Dropzone */}
               <div

@@ -3,7 +3,8 @@ import HeroBanner from "@/components/HeroBanner";
 import HomePageContent from "@/components/HomePageContent";
 import { getHomepageProducts } from "@/lib/products";
 
-// Revalidate homepage every 10 seconds for real-time seller products
+// Render dynamically on user request & revalidate every 10 seconds
+export const dynamic = 'force-dynamic';
 export const revalidate = 10;
 
 export default async function Home() {
