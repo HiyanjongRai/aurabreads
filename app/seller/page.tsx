@@ -143,7 +143,7 @@ export default async function SellerDashboardPage() {
   };
 
   return (
-    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1400, fontFamily: 'Inter, sans-serif' }}>
+    <div className="dashboard-page-container" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1400, fontFamily: 'Inter, sans-serif' }}>
 
       {/* ── Welcome Banner ────────────────────────────────────────────────────── */}
       <div style={{
@@ -236,7 +236,7 @@ export default async function SellerDashboardPage() {
       </div>
 
       {/* ── Products Table + Category Breakdown ───────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
+      <div className="responsive-dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 20, alignItems: 'start' }}>
 
         {/* Recent Products Table */}
         <div style={{ background: '#161622', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 20, overflow: 'hidden' }}>

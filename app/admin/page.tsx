@@ -228,7 +228,7 @@ export default async function AdminDashboardPage() {
   ];
 
   return (
-    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1400, color: '#ffffff' }}>
+    <div className="dashboard-page-container" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1400, color: '#ffffff' }}>
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>

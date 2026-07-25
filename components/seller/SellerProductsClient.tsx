@@ -97,7 +97,7 @@ export default function SellerProductsClient({ initialProducts }: Props) {
   ];
 
   return (
-    <div style={{ padding: '32px', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 22, fontFamily: 'Inter, sans-serif' }}>
+    <div className="dashboard-page-container" style={{ padding: '32px', maxWidth: 1200, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 22, fontFamily: 'Inter, sans-serif' }}>
 
       {/* ── Header ────────────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>

@@ -1885,3 +1885,176 @@ a {
 .seller-backdrop.visible {
   display: block;
 }
+
+/* ─────────────────────────────────────────
+   MOBILE RESPONSIVENESS (iPhone 12 / 390px+)
+───────────────────────────────────────── */
+@media (max-width: 991px) {
+  /* Navbar */
+  .ab-topbar-links {
+    display: none;
+  }
+  .ab-topbar {
+    justify-content: center;
+    padding: 6px 16px;
+    font-size: 10px;
+    text-align: center;
+  }
+  .ab-nav {
+    padding: 0 16px;
+    height: 60px;
+    gap: 12px;
+  }
+  .ab-nav-links {
+    display: none;
+  }
+  .ab-hamburger {
+    display: flex;
+  }
+  .ab-logo-name {
+    font-size: 20px;
+  }
+  .ab-logo-tagline {
+    font-size: 8px;
+  }
+
+  /* Hero */
+  .ab-hero {
+    height: 480px;
+  }
+  .ab-hero-content {
+    padding: 0 20px;
+  }
+  .ab-hero-title {
+    font-size: 34px;
+    margin-bottom: 12px;
+  }
+  .ab-hero-sub {
+    font-size: 13px;
+    margin-bottom: 20px;
+  }
+  .ab-hero-arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
+  }
+  .ab-hero-arrow--left { left: 8px; }
+  .ab-hero-arrow--right { right: 8px; }
+
+  /* Trust Bar */
+  .ab-trust-bar {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ab-trust-item {
+    padding: 14px 16px;
+  }
+
+  /* Container & Section */
+  .ab-container {
+    padding: 0 16px;
+  }
+  .ab-section {
+    padding: 40px 0;
+  }
+  .ab-section-title {
+    font-size: 24px;
+    margin-bottom: 28px;
+  }
+  .ab-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  /* Categories Grid */
+  .ab-categories {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .ab-category-circle {
+    max-width: 100px;
+  }
+
+  /* Products Grid */
+  .ab-products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .ab-product-info {
+    padding: 10px 12px 14px;
+  }
+  .ab-product-name {
+    font-size: 13px;
+  }
+  .ab-product-price {
+    font-size: 13px;
+  }
+
+  /* Promo Banner */
+  .ab-promo-banner {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .ab-promo-img-side {
+    height: 200px;
+  }
+  .ab-promo-content {
+    padding: 32px 20px;
+  }
+
+  /* Features Strip */
+  .ab-features-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ab-feature {
+    padding: 16px;
+  }
+
+  /* Footer */
+  .ab-footer-grid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-page-container {
+    padding: 16px !important;
+    gap: 20px !important;
+  }
+  .responsive-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* iPhone 12 / Small Screens */
+  .ab-trust-bar {
+    grid-template-columns: 1fr;
+  }
+  .ab-features-strip {
+    grid-template-columns: 1fr;
+  }
+  .ab-hero-arrow {
+    display: none;
+  }
+
+  /* Admin & Seller layout adjustments */
+  .seller-main, .admin-main {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .dashboard-page-container {
+    padding: 14px !important;
+    gap: 16px !important;
+  }
+
+  /* Stack columns in seller/admin dashboards */
+  .responsive-dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+
