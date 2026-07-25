@@ -2,7 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { X, ShoppingBag, ArrowRight, Trash2, Tag, Truck, ShieldCheck, Sparkles, Plus, Minus } from 'lucide-react';
+import {
+  X,
+  ShoppingBag,
+  ArrowRight,
+  Trash2,
+  Tag,
+  Truck,
+  ShieldCheck,
+  Sparkles,
+  Plus,
+  Minus,
+  Package,
+  Gift,
+} from 'lucide-react';
 
 export type CartItem = {
   id: string;
@@ -15,12 +28,34 @@ export type CartItem = {
 
 const FREE_SHIPPING_THRESHOLD = 50;
 const SAMPLE_PROMO_CODE = 'WELCOME10';
-const PROMO_DISCOUNT = 0.1; // 10%
+const PROMO_DISCOUNT = 0.1;
 
 type CartDrawerProps = {
   isOpen: boolean;
   onClose: () => void;
 };
+
+/* Fallback image component — shows elegant placeholder when img is broken */
+function ItemImage({ src, alt }: { src: string; alt: string }) {
+  const [error, setError] = useState(false);
+
+  if (!src || error) {
+    return (
+      <div className="cd-img-fallback">
+        <Gift size={22} className="cd-img-fallback-icon" />
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="cd-item-img"
+      onError={() => setError(true)}
+    />
+  );
+}
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -28,23 +63,17 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [promoError, setPromoError] = useState('');
 
-  // Load dynamic cart items from localStorage on mount & when drawer opens
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('aurabeads_cart');
-        if (stored) {
-          setItems(JSON.parse(stored));
-        } else {
-          setItems([]);
-        }
+        setItems(stored ? JSON.parse(stored) : []);
       } catch {
         setItems([]);
       }
     }
   }, [isOpen]);
 
-  // Sync cart items to localStorage and notify components
   const updateCart = (newItems: CartItem[]) => {
     setItems(newItems);
     if (typeof window !== 'undefined') {
@@ -59,42 +88,30 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const discountAmount = appliedPromo ? subtotal * PROMO_DISCOUNT : 0;
-  const total = subtotal - discountAmount;
-  const progressToFreeShipping = Math.min(100, Math.round((total / FREE_SHIPPING_THRESHOLD) * 100));
-  const amountNeededForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - total);
+  const estimatedShipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 150;
+  const total = subtotal - discountAmount + estimatedShipping;
+  const progressToFreeShipping = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const amountNeeded = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
   const totalItemCount = items.reduce((sum, item) => sum + item.qty, 0);
 
-  const removeItem = (id: string) => {
-    const updated = items.filter((item) => item.id !== id);
-    updateCart(updated);
-  };
+  const removeItem = (id: string) => updateCart(items.filter(i => i.id !== id));
 
   const updateQty = (id: string, delta: number) => {
     const updated = items
-      .map((item) => {
-        if (item.id === id) {
-          const newQty = item.qty + delta;
-          return newQty > 0 ? { ...item, qty: newQty } : null;
-        }
-        return item;
-      })
-      .filter(Boolean) as CartItem[];
-
+      .map(item => item.id === id ? { ...item, qty: item.qty + delta } : item)
+      .filter(item => item.qty > 0);
     updateCart(updated);
   };
 
   const handleApplyPromo = (codeToApply?: string) => {
     setPromoError('');
     const code = (codeToApply || promoCode).trim().toUpperCase();
-    if (!code) {
-      setPromoError('Please enter a promo code');
-      return;
-    }
+    if (!code) { setPromoError('Enter a promo code first'); return; }
     if (code === SAMPLE_PROMO_CODE) {
       setAppliedPromo(code);
       setPromoCode('');
     } else {
-      setPromoError('Invalid promo code. Try WELCOME10');
+      setPromoError('Invalid code. Try WELCOME10');
     }
   };
 
@@ -107,233 +124,202 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex justify-end bg-black/65 backdrop-blur-sm transition-opacity duration-300 animate-fade-in"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="relative flex h-full w-full max-w-md flex-col bg-white shadow-2xl overflow-hidden animate-slide-left">
+    <div className="cd-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="cd-panel">
 
-        {/* ── Header (Fixed) ────────────────────────────────────────────────── */}
-        <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 px-5 py-4 bg-gray-900 text-white">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gold-500/20 border border-gold-500/30 text-gold-400">
-              <ShoppingBag size={17} />
+        {/* ── Header ───────────────────────────── */}
+        <div className="cd-header">
+          <div className="cd-header-left">
+            <div className="cd-header-icon">
+              <ShoppingBag size={18} />
             </div>
             <div>
-              <h2 className="font-serif text-base font-bold tracking-tight text-white leading-tight">Your Shopping Bag</h2>
-              <p className="text-[11px] text-gray-400 font-medium">
-                {totalItemCount} {totalItemCount === 1 ? 'item' : 'items'} selected
+              <h2 className="cd-header-title">Shopping Bag</h2>
+              <p className="cd-header-sub">
+                {totalItemCount === 0 ? 'Empty' : `${totalItemCount} ${totalItemCount === 1 ? 'item' : 'items'}`}
               </p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-gray-300 transition hover:bg-white/20 hover:text-white"
-            aria-label="Close cart"
-          >
-            <X size={16} />
+          <button onClick={onClose} className="cd-close-btn" aria-label="Close cart">
+            <X size={18} />
           </button>
         </div>
 
-        {/* ── Free Shipping Progress Bar (Fixed) ───────────────────────────── */}
+        {/* ── Free Shipping Bar ─────────────────── */}
         {items.length > 0 && (
-          <div className="flex-shrink-0 bg-amber-50/80 border-b border-amber-100 px-5 py-2.5">
-            <div className="flex items-center justify-between text-xs font-semibold mb-1">
-              <span className="flex items-center gap-1.5 text-amber-900">
-                <Truck size={13} className="text-amber-700" />
-                {amountNeededForFreeShipping === 0 ? (
-                  <strong className="text-emerald-700">Congratulations! You unlocked FREE shipping 🎉</strong>
-                ) : (
-                  <span>Add <strong className="text-amber-900">NPR {amountNeededForFreeShipping.toFixed(2)}</strong> for FREE Shipping</span>
-                )}
-              </span>
-              <span className="text-[11px] font-bold text-amber-800">{progressToFreeShipping}%</span>
+          <div className="cd-shipping-bar">
+            <div className="cd-shipping-bar-text">
+              <span className="cd-shipping-bar-icon"><Truck size={12} /></span>
+              {amountNeeded === 0 ? (
+                <span className="cd-shipping-unlocked">🎉 You unlocked <strong>FREE shipping</strong>!</span>
+              ) : (
+                <span>Add <strong>NPR {amountNeeded.toFixed(0)}</strong> more for free shipping</span>
+              )}
+              <span className="cd-shipping-pct">{progressToFreeShipping}%</span>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-amber-200/60 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-gold-500 to-amber-600 transition-all duration-500"
-                style={{ width: `${progressToFreeShipping}%` }}
-              />
+            <div className="cd-shipping-track">
+              <div className="cd-shipping-fill" style={{ width: `${progressToFreeShipping}%` }} />
             </div>
           </div>
         )}
 
-        {/* ── Cart Items Scrollable Container (Flexible) ─────────────────── */}
-        <div className="flex-1 overflow-y-auto min-h-0 px-5 py-3 space-y-3">
+        {/* ── Cart Items ────────────────────────── */}
+        <div className="cd-items-area">
           {items.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center space-y-4 text-center py-12">
-              <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-gold-50 text-gold-600 border border-gold-100 shadow-inner">
-                <ShoppingBag size={32} />
-              </div>
-              <div className="space-y-1">
-                <h3 className="font-serif text-lg font-bold text-gray-900">Your shopping bag is empty</h3>
-                <p className="max-w-xs text-xs text-gray-500 leading-relaxed">
-                  Explore our handcrafted jewelry collection and add your favorite pieces to your cart.
-                </p>
-              </div>
-              <button
-                onClick={onClose}
-                className="mt-2 rounded-xl bg-gray-900 px-6 py-2.5 text-xs font-bold text-white shadow-md transition hover:bg-black"
-              >
-                Start Shopping →
+            <div className="cd-empty">
+              <div className="cd-empty-icon"><ShoppingBag size={36} /></div>
+              <h3 className="cd-empty-title">Your bag is empty</h3>
+              <p className="cd-empty-sub">Explore our handcrafted collection and find pieces you&apos;ll love.</p>
+              <button onClick={onClose} className="cd-empty-btn">
+                Browse Collection →
               </button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="cd-items-list">
               {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="group flex gap-3 rounded-xl border border-gray-100 bg-white p-3 shadow-sm transition hover:border-gold-200"
-                >
-                  <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-gray-50 border border-gray-100">
-                    <img src={item.img} alt={item.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                <div key={item.id} className="cd-item">
+                  {/* Product Image */}
+                  <div className="cd-item-img-wrap">
+                    <ItemImage src={item.img} alt={item.name} />
                   </div>
 
-                  <div className="flex flex-1 flex-col justify-between min-w-0">
-                    <div className="flex justify-between items-start gap-1">
-                      <div className="min-w-0">
+                  {/* Product Info */}
+                  <div className="cd-item-body">
+                    <div className="cd-item-top">
+                      <div className="cd-item-meta">
                         {item.category && (
-                          <span className="block text-[9px] font-bold tracking-wider text-gold-700 uppercase leading-none mb-1">{item.category}</span>
+                          <span className="cd-item-cat">{item.category}</span>
                         )}
-                        <h3 className="text-xs font-bold text-gray-900 truncate">{item.name}</h3>
+                        <h3 className="cd-item-name">{item.name}</h3>
+                        <p className="cd-item-unit-price">NPR {item.price.toLocaleString()} each</p>
                       </div>
                       <button
                         onClick={() => removeItem(item.id)}
-                        className="text-gray-400 hover:text-red-500 transition p-1 rounded-md hover:bg-red-50 flex-shrink-0"
+                        className="cd-remove-btn"
                         aria-label="Remove item"
                       >
                         <Trash2 size={13} />
                       </button>
                     </div>
 
-                    <div className="flex items-center justify-between pt-1">
-                      <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5">
+                    {/* Qty + Price Row */}
+                    <div className="cd-item-bottom">
+                      <div className="cd-qty-control">
                         <button
                           onClick={() => updateQty(item.id, -1)}
-                          className="flex h-5 w-5 items-center justify-center rounded text-gray-600 hover:bg-white hover:text-black transition"
+                          className="cd-qty-btn"
+                          aria-label="Decrease quantity"
                         >
                           <Minus size={10} />
                         </button>
-                        <span className="w-6 text-center text-xs font-bold text-gray-900">{item.qty}</span>
+                        <span className="cd-qty-val">{item.qty}</span>
                         <button
                           onClick={() => updateQty(item.id, 1)}
-                          className="flex h-5 w-5 items-center justify-center rounded text-gray-600 hover:bg-white hover:text-black transition"
+                          className="cd-qty-btn"
+                          aria-label="Increase quantity"
                         >
                           <Plus size={10} />
                         </button>
                       </div>
-
-                      <div className="text-right">
-                        <span className="text-xs font-extrabold text-gray-900">
-                          NPR {(item.price * item.qty).toLocaleString()}
-                        </span>
-                      </div>
+                      <span className="cd-item-total">
+                        NPR {(item.price * item.qty).toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </div>
               ))}
+
+              {/* Upsell nudge */}
+              <div className="cd-upsell">
+                <Package size={13} />
+                <span>All orders are gift-wrapped & packaged with care</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* ── Footer & Checkout Section (Fixed at Bottom) ─────────────────── */}
+        {/* ── Footer ─────────────────────────── */}
         {items.length > 0 && (
-          <div className="flex-shrink-0 border-t border-gray-100 bg-white px-5 py-4 space-y-3 shadow-lg">
+          <div className="cd-footer">
 
-            {/* Quick Promo Selector */}
+            {/* Promo Code */}
             {!appliedPromo ? (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-bold text-gray-700 flex items-center gap-1">
-                    <Tag size={12} className="text-gold-600" />
-                    Promo code
-                  </label>
-                  <button
-                    onClick={() => handleApplyPromo(SAMPLE_PROMO_CODE)}
-                    className="text-[10px] font-bold text-gold-700 hover:text-gold-800 flex items-center gap-1 underline"
-                  >
-                    <Sparkles size={10} /> Use WELCOME10 (-10%)
-                  </button>
+              <div className="cd-promo-row">
+                <div className="cd-promo-label">
+                  <Tag size={12} />
+                  <span>Promo Code</span>
                 </div>
-                <div className="flex gap-2">
+                <button
+                  className="cd-promo-hint"
+                  onClick={() => handleApplyPromo(SAMPLE_PROMO_CODE)}
+                >
+                  <Sparkles size={10} /> WELCOME10 (10% off)
+                </button>
+                <div className="cd-promo-input-row">
                   <input
                     type="text"
                     value={promoCode}
-                    onChange={(e) => {
-                      setPromoCode(e.target.value);
-                      setPromoError('');
-                    }}
-                    placeholder="Enter code (e.g. WELCOME10)"
-                    className="flex-1 h-8 px-3 rounded-lg border border-gray-200 text-xs outline-none focus:border-gold-500"
+                    onChange={e => { setPromoCode(e.target.value); setPromoError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
+                    placeholder="Enter promo code"
+                    className="cd-promo-input"
                   />
-                  <button
-                    onClick={() => handleApplyPromo()}
-                    className="px-3.5 h-8 bg-gold-600 text-white text-xs font-bold rounded-lg flex-shrink-0 hover:bg-gold-700 transition"
-                  >
+                  <button onClick={() => handleApplyPromo()} className="cd-promo-apply-btn">
                     Apply
                   </button>
                 </div>
-                {promoError && <p className="text-[10px] text-red-600 font-medium">{promoError}</p>}
+                {promoError && <p className="cd-promo-error">{promoError}</p>}
               </div>
             ) : (
-              <div className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-emerald-800 flex items-center gap-1">
-                    <Sparkles size={12} /> {appliedPromo} Applied
-                  </span>
-                  <span className="text-[10px] font-bold bg-emerald-200/60 text-emerald-800 px-1.5 py-0.5 rounded-full">
-                    -{(PROMO_DISCOUNT * 100)}% OFF
-                  </span>
+              <div className="cd-promo-applied">
+                <div className="cd-promo-applied-left">
+                  <Sparkles size={13} />
+                  <span>{appliedPromo} — 10% OFF applied</span>
                 </div>
-                <button
-                  onClick={handleRemovePromo}
-                  className="text-emerald-700 hover:text-emerald-900 p-0.5"
-                  aria-label="Remove promo code"
-                >
+                <button onClick={handleRemovePromo} className="cd-promo-remove">
                   <X size={13} />
                 </button>
               </div>
             )}
 
-            {/* Price Summary Breakdown */}
-            <div className="space-y-1 text-xs pt-1 border-t border-gray-100">
-              <div className="flex justify-between text-gray-600">
+            {/* Price Breakdown */}
+            <div className="cd-totals">
+              <div className="cd-total-row">
                 <span>Subtotal</span>
-                <span className="font-semibold text-gray-900">NPR {subtotal.toLocaleString()}</span>
+                <span>NPR {subtotal.toLocaleString()}</span>
               </div>
               {appliedPromo && (
-                <div className="flex justify-between text-emerald-700 font-semibold">
+                <div className="cd-total-row cd-discount-row">
                   <span>Discount ({appliedPromo})</span>
-                  <span>-NPR {discountAmount.toLocaleString()}</span>
+                  <span>−NPR {discountAmount.toLocaleString()}</span>
                 </div>
               )}
-              <div className="flex justify-between text-gray-600">
-                <span>Estimated Shipping</span>
-                <span className={amountNeededForFreeShipping === 0 ? 'text-emerald-700 font-bold' : 'font-semibold text-gray-900'}>
-                  {amountNeededForFreeShipping === 0 ? 'FREE' : 'NPR 150'}
+              <div className="cd-total-row">
+                <span>Shipping</span>
+                <span className={estimatedShipping === 0 ? 'cd-free' : ''}>
+                  {estimatedShipping === 0 ? 'FREE 🎉' : `NPR ${estimatedShipping}`}
                 </span>
               </div>
-              <div className="flex justify-between text-sm font-extrabold text-gray-900 pt-1 border-t border-gray-100">
-                <span>Total Amount</span>
-                <span className="text-gold-600 font-black">NPR {total.toLocaleString()}</span>
+              <div className="cd-total-final">
+                <span>Total</span>
+                <span>NPR {total.toLocaleString()}</span>
               </div>
             </div>
 
-            {/* Checkout Button */}
+            {/* Checkout CTA */}
             <Link
               href="/checkout"
               onClick={onClose}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 py-3 text-xs font-bold tracking-wider text-white uppercase shadow-md transition-all hover:bg-black active:scale-[0.99] cursor-pointer"
+              className="cd-checkout-btn"
             >
               <span>Proceed to Checkout</span>
-              <ArrowRight size={15} />
+              <ArrowRight size={16} />
             </Link>
 
-            <div className="flex items-center justify-center gap-1 text-[10px] text-gray-400 font-medium">
-              <ShieldCheck size={12} className="text-emerald-600" />
-              <span>256-Bit SSL Encrypted &amp; Guaranteed Safe Checkout</span>
+            {/* Security line */}
+            <div className="cd-secure-line">
+              <ShieldCheck size={11} />
+              <span>256-Bit SSL Encrypted &amp; Safe Checkout</span>
             </div>
           </div>
         )}

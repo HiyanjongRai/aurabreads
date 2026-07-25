@@ -131,7 +131,7 @@ function NavbarContent() {
         <div className="ab-topbar">
           <span>FREE SHIPPING ON ORDERS OVER Rs 50</span>
           <nav className="ab-topbar-links">
-            <Link href="#">About Us</Link>
+            <Link href="/about">About Us</Link>
             <Link href="#">Track Order</Link>
             <Link href="#">Help &amp; FAQs</Link>
           </nav>
