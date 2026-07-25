@@ -45,10 +45,41 @@ type Props = {
   relatedProducts?: Product[];
 };
 
-export default function ProductDetailClient({ product, relatedProducts = [] }: Props) {
-  const images = product.images && product.images.length > 0 ? product.images : ['/product-earrings2.png', '/product-earrings1.png', '/product-earrings3.png'];
+type ProductCartItem = {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+  img: string;
+  category?: string | null;
+};
+
+function getInitialProduct(product: Product) {
+  if (typeof window === 'undefined') return product;
+
+  try {
+    const raw = sessionStorage.getItem('aurabeads_last_viewed_product');
+    if (!raw) return product;
+
+    const cached = JSON.parse(raw) as Product;
+    if (cached.id !== product.id) return product;
+
+    return {
+      ...product,
+      ...cached,
+      images: cached.images && cached.images.length > 0 ? cached.images : product.images,
+    };
+  } catch {
+    return product;
+  }
+}
+
+export default function ProductDetailClient({ product: initialProduct, relatedProducts = [] }: Props) {
+  const [displayProduct] = useState<Product>(() => getInitialProduct(initialProduct));
+  const product = displayProduct;
+  const images = product.images && product.images.length > 0 ? product.images : ['/product-earrings2.png'];
   const [selectedImg, setSelectedImg] = useState<string>(images[0]);
-  const [selectedColor, setSelectedColor] = useState<string>('Gold');
+  const [selectedColor, setSelectedColor] = useState<string>(product.color ?? '');
   const [qty, setQty] = useState<number>(1);
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
   const [addedToast, setAddedToast] = useState<boolean>(false);
@@ -62,7 +93,7 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('aurabeads_cart');
-        const cartItems: any[] = stored ? JSON.parse(stored) : [];
+        const cartItems: ProductCartItem[] = stored ? JSON.parse(stored) : [];
         const existing = cartItems.find((item) => item.id === product.id);
         if (existing) {
           existing.qty += qty;
@@ -161,20 +192,22 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
           
           {/* Tag & Title */}
           <div>
-            <span style={{
-              display: 'inline-block',
-              background: '#fef3c7',
-              color: '#b45309',
-              fontSize: 10,
-              fontWeight: 800,
-              letterSpacing: '0.12em',
-              textTransform: 'uppercase',
-              padding: '4px 10px',
-              borderRadius: 4,
-              marginBottom: 10,
-            }}>
-              BESTSELLER
-            </span>
+            {product.featured ? (
+              <span style={{
+                display: 'inline-block',
+                background: '#fef3c7',
+                color: '#b45309',
+                fontSize: 10,
+                fontWeight: 800,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                padding: '4px 10px',
+                borderRadius: 4,
+                marginBottom: 10,
+              }}>
+                BESTSELLER
+              </span>
+            ) : null}
 
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
               <h1 style={{
@@ -201,19 +234,28 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
               >
                 <Heart size={22} fill={isWishlisted ? '#e11d48' : 'none'} />
               </button>
-            </div>
+              </div>
+            {product.shortDescription && (
+              <p style={{ fontSize: 14, color: '#4b5563', lineHeight: 1.8, marginTop: 16, maxWidth: 560 }}>
+                {product.shortDescription}
+              </p>
+            )}
+          </div>
 
-            {/* Ratings */}
+          {/* Ratings */}
+          {(product.rating != null || product.reviews != null) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
               <div style={{ display: 'flex', color: '#f59e0b', fontSize: 14 }}>
                 {[1, 2, 3, 4, 5].map((s) => (
-                  <Star key={s} size={14} fill="#f59e0b" color="#f59e0b" />
+                  <Star key={s} size={14} fill={product.rating && s <= Math.round(product.rating) ? '#f59e0b' : 'none'} color="#f59e0b" />
                 ))}
               </div>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{product.rating || 4.8}</span>
-              <span style={{ fontSize: 12, color: '#6b7280' }}>({product.reviews || 96} Reviews)</span>
+              {product.rating != null && <span style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>{product.rating.toFixed(1)}</span>}
+              {product.reviews != null && (
+                <span style={{ fontSize: 12, color: '#6b7280' }}>({product.reviews} Reviews)</span>
+              )}
             </div>
-          </div>
+          )}
 
           {/* Pricing & Installments */}
           <div style={{ paddingBottom: 16, borderBottom: '1px solid #f3f4f6' }}>
@@ -227,6 +269,12 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
                 </span>
               )}
             </div>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12, color: '#6b7280', fontSize: 12 }}>
+              {product.sku && <span>SKU: {product.sku}</span>}
+              <span>Category: {product.category}</span>
+              <span>{product.stock != null ? `${product.stock} in stock` : 'Stock info unavailable'}</span>
+              {product.style && <span>Style: {product.style}</span>}
+            </div>
 
             <p style={{ fontSize: 12, color: '#4b5563', margin: '6px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
               Pay in 4 interest-free payments of NPR {((product.salePrice ?? product.price) / 4).toFixed(2)} with{' '}
@@ -239,30 +287,29 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
           {/* Color Selector */}
           <div>
             <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 10 }}>
-              COLOR: <span style={{ fontWeight: 500, textTransform: 'none' }}>{selectedColor}</span>
+              COLOR: <span style={{ fontWeight: 500, textTransform: 'none' }}>{selectedColor || 'Select'}</span>
             </label>
-            <div style={{ display: 'flex', gap: 10 }}>
-              {[
-                { name: 'Gold', hex: '#d4af37' },
-                { name: 'Silver', hex: '#d1d5db' },
-                { name: 'Rose Gold', hex: '#fda4af' },
-              ].map((c) => (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              {product.color ? (
                 <button
-                  key={c.name}
-                  onClick={() => setSelectedColor(c.name)}
+                  onClick={() => setSelectedColor(product.color || '')}
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: c.hex,
-                    border: selectedColor === c.name ? '2.5px solid #111827' : '1px solid #e5e7eb',
+                    minWidth: 88,
+                    padding: '10px 14px',
+                    borderRadius: 999,
+                    border: '1px solid #d1d5db',
+                    background: '#f8fafc',
                     cursor: 'pointer',
-                    boxShadow: 'inset 0 0 0 2px #ffffff',
-                    transition: 'transform 0.15s',
+                    color: '#111827',
+                    fontSize: 12,
+                    fontWeight: 700,
                   }}
-                  title={c.name}
-                />
-              ))}
+                >
+                  {product.color}
+                </button>
+              ) : (
+                <span style={{ color: '#6b7280', fontSize: 12 }}>Color information unavailable</span>
+              )}
             </div>
           </div>
 
@@ -352,8 +399,8 @@ export default function ProductDetailClient({ product, relatedProducts = [] }: P
           {/* Accordion Panels (Right Sidebar Screenshot 2) */}
           <div style={{ borderTop: '1px solid #e5e7eb', marginTop: 12 }}>
             {[
-              { key: 'details', title: 'Product Details', content: product.fullDescription || 'Crafted with high-grade stainless steel and double-dipped in 18k gold plating for long-lasting luster and tarnish resistance.' },
-              { key: 'materials', title: 'Materials', content: product.material || 'Gold Plated Stainless Steel · Hypoallergenic · Nickel-Free' },
+              { key: 'details', title: 'Product Details', content: product.fullDescription ?? 'Product details are currently unavailable.' },
+              { key: 'materials', title: 'Materials', content: product.material ?? 'Material information is currently unavailable.' },
               { key: 'shipping', title: 'Shipping', content: 'Free standard shipping on orders over NPR 50. Delivered within 3-5 business days.' },
               { key: 'returns', title: 'Returns', content: '30-day hassle-free returns. Returned items must be unworn and in original condition.' },
             ].map((acc) => (

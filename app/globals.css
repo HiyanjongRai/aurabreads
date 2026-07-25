@@ -1166,6 +1166,53 @@ a {
   transform: scale(1.06);
 }
 
+.ab-card-view-options {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0) 35%, rgba(17, 24, 39, 0.52) 100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease;
+}
+
+.ab-card-view-options span {
+  min-width: 132px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 12px 16px;
+  text-align: center;
+  text-transform: uppercase;
+  transform: translateY(8px);
+  transition: transform 0.22s ease;
+}
+
+.ab-product-card:hover .ab-card-view-options,
+.ab-product-card:focus-within .ab-card-view-options,
+.ab-pl-card:hover .ab-card-view-options,
+.ab-pl-card:focus-visible .ab-card-view-options,
+.ab-pl-card:focus-within .ab-card-view-options {
+  opacity: 1;
+}
+
+.ab-product-card:hover .ab-card-view-options span,
+.ab-product-card:focus-within .ab-card-view-options span,
+.ab-pl-card:hover .ab-card-view-options span,
+.ab-pl-card:focus-visible .ab-card-view-options span,
+.ab-pl-card:focus-within .ab-card-view-options span {
+  transform: translateY(0);
+}
+
 .ab-wishlist-btn {
   position: absolute;
   top: 12px;
@@ -1913,11 +1960,40 @@ a {
 
 .ab-footer-bottom {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 12px 24px;
   padding: 24px 0;
   font-size: 12px;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.6);
+  text-align: center;
+}
+
+.ab-footer-bottom p {
+  margin: 0;
+}
+
+.ab-footer-copy {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+}
+
+.ab-footer-credit {
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+  max-width: 460px;
+  line-height: 1.5;
+}
+
+.ab-footer-credit a {
+  color: rgba(255,255,255,0.95);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+.ab-footer-credit a:hover {
+  color: #f7ecd2;
 }
 
 .ab-payment-icons {
@@ -1928,12 +2004,12 @@ a {
 .ab-payment-icons span {
   background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 4px;
-  padding: 4px 8px;
+  border-radius: 999px;
+  padding: 6px 10px;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255,255,255,0.75);
 }
 
 /* ─────────────────────────────────────────
@@ -4994,6 +5070,7 @@ a {
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid #f4f4f5;
+  cursor: pointer;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -5034,6 +5111,7 @@ a {
 
 .ab-pl-badge {
   position: absolute;
+  z-index: 2;
   top: 10px;
   left: 10px;
   background: #09090b;
@@ -5048,6 +5126,7 @@ a {
 
 .ab-pl-wish-btn {
   position: absolute;
+  z-index: 2;
   top: 10px;
   right: 10px;
   width: 32px;

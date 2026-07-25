@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { PublicProduct } from '@/lib/products';
 import {
   Heart,
@@ -22,7 +23,18 @@ type Props = {
   initialProducts: PublicProduct[];
 };
 
-const CATALOG_FALLBACK: (PublicProduct & { rating: number; reviews: number; badge?: string })[] = [
+type CatalogProduct = PublicProduct & { rating: number; reviews: number; badge?: string };
+
+type CatalogCartItem = {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+  img: string;
+  category?: string | null;
+};
+
+const CATALOG_FALLBACK: CatalogProduct[] = [
   {
     id: 'p1',
     name: 'Twist Knot Earrings',
@@ -183,16 +195,6 @@ const CATALOG_FALLBACK: (PublicProduct & { rating: number; reviews: number; badg
   },
 ];
 
-const CATEGORIES = [
-  { name: 'Earrings', count: 62 },
-  { name: 'Necklaces', count: 28 },
-  { name: 'Rings', count: 18 },
-  { name: 'Bracelets', count: 16 },
-  { name: 'Hair Accessories', count: 12 },
-  { name: 'Sunglasses', count: 10 },
-  { name: 'Other Accessories', count: 10 },
-];
-
 const COLLECTIONS = ['New In', 'Bestsellers', 'Minimal Edit', 'Golden Hour', 'Everyday Essentials'];
 const MATERIALS = ['Gold Plated', 'Stainless Steel', 'Brass', 'Alloy', 'Pearl'];
 const COLORS = [
@@ -215,6 +217,7 @@ function StarRating({ rating = 5 }: { rating?: number }) {
 }
 
 export default function ProductsListClient({ initialProducts }: Props) {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
@@ -254,6 +257,28 @@ export default function ProductsListClient({ initialProducts }: Props) {
     return CATALOG_FALLBACK;
   }, [initialProducts]);
 
+  const categoryOptions = useMemo(() => {
+    const counts = allProducts.reduce<Record<string, number>>((acc, product) => {
+      const key = product.category || 'Other Accessories';
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }, [allProducts]);
+
+  const collectionCounts = useMemo<Record<string, number>>(() => {
+    return {
+      'New In': allProducts.length,
+      Bestsellers: allProducts.filter((product) => product.featured).length,
+      'Minimal Edit': allProducts.length,
+      'Golden Hour': allProducts.length,
+      'Everyday Essentials': allProducts.length,
+    };
+  }, [allProducts]);
+
   // Filtering & Sorting
   const filteredProducts = useMemo(() => {
     return allProducts
@@ -261,6 +286,24 @@ export default function ProductsListClient({ initialProducts }: Props) {
         if (selectedCategory && p.category.toLowerCase() !== selectedCategory.toLowerCase()) {
           return false;
         }
+
+        if (selectedCollections.length > 0) {
+          const matchesCollection = selectedCollections.some((col) => {
+            if (col === 'Bestsellers') return p.featured;
+            return true;
+          });
+          if (!matchesCollection) return false;
+        }
+
+        if (selectedMaterials.length > 0) {
+          // Product data does not contain explicit material metadata yet.
+          // Keep this as a pass-through for future dynamic material filtering.
+        }
+
+        if (selectedColor && selectedColor !== p.category) {
+          // No product color metadata available currently.
+        }
+
         if (p.price > maxPrice) return false;
         return true;
       })
@@ -269,7 +312,7 @@ export default function ProductsListClient({ initialProducts }: Props) {
         if (sortBy === 'price-high') return b.price - a.price;
         return 0;
       });
-  }, [allProducts, selectedCategory, maxPrice, sortBy]);
+  }, [allProducts, selectedCategory, selectedCollections, selectedMaterials, selectedColor, maxPrice, sortBy]);
 
   const clearAllFilters = () => {
     setSelectedCategory(null);
@@ -279,11 +322,18 @@ export default function ProductsListClient({ initialProducts }: Props) {
     setMaxPrice(50000);
   };
 
-  const handleAddToCart = (product: any) => {
+  const openProductDetails = (product: CatalogProduct) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('aurabeads_last_viewed_product', JSON.stringify(product));
+    }
+    router.push(`/product/${product.id}`);
+  };
+
+  const handleAddToCart = (product: CatalogProduct) => {
     if (typeof window !== 'undefined') {
       try {
         const stored = localStorage.getItem('aurabeads_cart');
-        const items: any[] = stored ? JSON.parse(stored) : [];
+        const items: CatalogCartItem[] = stored ? JSON.parse(stored) : [];
         const existing = items.find((i) => i.id === product.id);
         if (existing) {
           existing.qty = (existing.qty || 1) + 1;
@@ -373,7 +423,7 @@ export default function ProductsListClient({ initialProducts }: Props) {
               </button>
               {openSections.categories && (
                 <div className="ab-pl-group-body">
-                  {CATEGORIES.map((cat) => {
+                  {categoryOptions.map((cat) => {
                     const isChecked = selectedCategory === cat.name;
                     return (
                       <div
@@ -417,6 +467,7 @@ export default function ProductsListClient({ initialProducts }: Props) {
                           {isChecked && <Check size={10} strokeWidth={3} />}
                         </div>
                         <span className="ab-pl-checkbox-label">{col}</span>
+                        <span className="ab-pl-checkbox-count">({collectionCounts[col] ?? 0})</span>
                       </div>
                     );
                   })}
@@ -564,21 +615,38 @@ export default function ProductsListClient({ initialProducts }: Props) {
                   const img = product.images && product.images.length > 0 ? product.images[0] : '/product-earrings1.png';
 
                   return (
-                    <div key={product.id} className="ab-pl-card">
+                    <div
+                      key={product.id}
+                      className="ab-pl-card"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openProductDetails(product)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          openProductDetails(product);
+                        }
+                      }}
+                    >
                       {/* Image container */}
                       <div className="ab-pl-card-img-wrap">
-                        <Link href={`/product/${product.id}`} className="ab-pl-card-img-link">
-                          <img src={img} alt={product.name} className="ab-pl-card-img" />
-                        </Link>
+                        <img src={img} alt={product.name} className="ab-pl-card-img" />
+                        <div className="ab-card-view-options ab-card-view-options--catalog" aria-hidden="true">
+                          <span>View Options</span>
+                        </div>
 
                         {product.badge && (
                           <span className="ab-pl-badge">{product.badge}</span>
                         )}
 
                         <button
-                          onClick={() => toggleWishlist(product.id)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleWishlist(product.id);
+                          }}
                           className="ab-pl-wish-btn"
                           aria-label="Add to wishlist"
+                          type="button"
                         >
                           <Heart size={14} className={isWishlisted ? 'filled' : ''} />
                         </button>
@@ -586,9 +654,7 @@ export default function ProductsListClient({ initialProducts }: Props) {
 
                       {/* Card Content */}
                       <div className="ab-pl-card-content">
-                        <Link href={`/product/${product.id}`} className="ab-pl-card-title-link">
-                          <h3 className="ab-pl-card-title">{product.name}</h3>
-                        </Link>
+                        <h3 className="ab-pl-card-title">{product.name}</h3>
 
                         <div className="ab-pl-card-price-row">
                           <span className="ab-pl-card-price">
@@ -602,8 +668,12 @@ export default function ProductsListClient({ initialProducts }: Props) {
                         </div>
 
                         <button
-                          onClick={() => handleAddToCart(product)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleAddToCart(product);
+                          }}
                           className="ab-pl-add-btn"
+                          type="button"
                         >
                           Add to Bag
                         </button>

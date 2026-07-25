@@ -10,7 +10,7 @@ const slides = [
     title: "Effortless Style,\nTimeless You",
     sub: "Fashion jewelry that complements your every mood and moment.",
     cta: "Shop Now",
-    href: "#bestsellers",
+    href: "/products",
   },
   {
     tag: "New Arrivals",

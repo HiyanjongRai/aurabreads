@@ -59,6 +59,8 @@ async function getProductAndRelated(id: string): Promise<{ product: ProductDetai
         })),
       };
     }
+
+    console.warn(`[getProductAndRelated] No product found for id=${id}`);
   } catch (err) {
     console.warn('[getProductAndRelated] Prisma error:', err);
   }
@@ -66,23 +68,36 @@ async function getProductAndRelated(id: string): Promise<{ product: ProductDetai
   // 2. Try Supabase REST API fallback
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://twyrkcgwpiyeftrdlumi.supabase.co';
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    const key =
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      process.env.SUPABASE_SECRET_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+      '';
 
     if (url && key) {
       const supabase = createClient(url, key, { auth: { persistSession: false } });
-      const { data: supaProduct } = await supabase
+      const { data: supaProduct, error: productError } = await supabase
         .from('Product')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
+
+      if (productError) {
+        console.error('[getProductAndRelated] Supabase product lookup error:', productError.message || productError);
+      }
 
       if (supaProduct) {
-        const { data: supaRelated } = await supabase
+        const { data: supaRelated, error: relatedError } = await supabase
           .from('Product')
           .select('*')
           .eq('category', supaProduct.category)
           .neq('id', supaProduct.id)
           .limit(5);
+
+        if (relatedError) {
+          console.error('[getProductAndRelated] Supabase related lookup error:', relatedError.message || relatedError);
+        }
 
         return {
           product: {
@@ -90,104 +105,37 @@ async function getProductAndRelated(id: string): Promise<{ product: ProductDetai
             rating: 4.8,
             reviews: 96,
           },
-          relatedProducts: (supaRelated || []).map((p: any) => ({
+          relatedProducts: ((supaRelated || []) as ProductDetail[]).map((p) => ({
             ...p,
             rating: 4.7,
             reviews: 45,
           })),
         };
       }
+    } else {
+      console.error('[getProductAndRelated] Supabase URL or key missing for fallback lookup');
     }
   } catch (fallbackErr) {
     console.error('[getProductAndRelated] Supabase REST error:', fallbackErr);
   }
 
-  // 3. Demo fallback if product ID is a demo item or DB is empty
-  const demoProducts: ProductDetail[] = [
-    {
-      id: 'demo-1',
-      name: 'Twist Knot Earrings',
-      category: 'Earrings',
-      price: 18.00,
-      salePrice: null,
-      rating: 4.8,
-      reviews: 128,
-      stock: 24,
-      status: 'active',
-      featured: true,
-      sku: 'EAR-001',
-      shortDescription: 'Elegant twist knot earrings crafted with 18k gold plating.',
-      fullDescription: 'Add a touch of timeless sophistication to your jewelry collection with our Twist Knot Earrings. Designed for everyday elegance, these lightweight earrings are tarnish-free and hypoallergenic.',
-      material: '18K Gold Plated Stainless Steel',
-      color: 'Gold',
-      style: 'Classic',
-      images: ['/product-earrings1.png', '/product-earrings2.png', '/product-earrings3.png'],
-    },
-    {
-      id: 'demo-2',
-      name: 'Chunky Hoop Earrings',
-      category: 'Earrings',
-      price: 20.00,
-      salePrice: null,
-      rating: 4.8,
-      reviews: 96,
-      stock: 15,
-      status: 'active',
-      featured: true,
-      sku: 'EAR-002',
-      shortDescription: 'Bold statement chunky hoop earrings with gold luster finish.',
-      fullDescription: 'Make a statement with our Bestselling Chunky Hoop Earrings. Crafted with premium stainless steel and thick gold plating, these hoops offer maximum shine without pulling on your ears.',
-      material: 'Gold Plated Stainless Steel',
-      color: 'Gold',
-      style: 'Modern',
-      images: ['/product-earrings2.png', '/product-earrings1.png', '/product-earrings3.png'],
-    },
-    {
-      id: 'demo-3',
-      name: 'Pearl Drop Earrings',
-      category: 'Earrings',
-      price: 16.00,
-      salePrice: null,
-      rating: 4.6,
-      reviews: 74,
-      stock: 18,
-      status: 'active',
-      featured: false,
-      sku: 'EAR-003',
-      shortDescription: 'Lustrous freshwater pearl drop earrings with gold accent loops.',
-      fullDescription: 'Delicate and feminine freshwater pearl drop earrings designed for romantic dinners, weddings, and formal occasions.',
-      material: 'Freshwater Pearl & Gold Wire',
-      color: 'Gold / Pearl',
-      style: 'Bridal / Formal',
-      images: ['/product-earrings3.png', '/product-earrings1.png', '/product-earrings2.png'],
-    },
-    {
-      id: 'demo-4',
-      name: 'Chain Link Bracelet',
-      category: 'Bracelets',
-      price: 22.00,
-      salePrice: null,
-      rating: 4.7,
-      reviews: 64,
-      stock: 30,
-      status: 'active',
-      featured: false,
-      sku: 'BRC-001',
-      shortDescription: 'Interlocking gold chain link bracelet with secure lobster clasp.',
-      fullDescription: 'Minimalist chain link bracelet perfect for layering or wearing solo. Water-resistant and tarnish-proof.',
-      material: '18K Gold Plated Brass',
-      color: 'Gold',
-      style: 'Minimal',
-      images: ['/product-bracelet.png', '/product-earrings1.png', '/product-earrings2.png'],
-    },
-  ];
-
-  const matched = demoProducts.find((item) => item.id === id) || demoProducts[1];
-  const related = demoProducts.filter((item) => item.id !== matched.id);
-
   return {
-    product: matched,
-    relatedProducts: related,
+    product: {
+      id,
+      name: 'Product Details',
+      category: 'Jewelry',
+      price: 0,
+      salePrice: null,
+      rating: 4.8,
+      reviews: 0,
+      stock: 0,
+      status: 'active',
+      featured: false,
+      shortDescription: 'Loading the latest product details.',
+      fullDescription: 'If this product was opened from the catalog, its details will load from your current browsing session.',
+      images: ['/product-earrings1.png'],
+    },
+    relatedProducts: [],
   };
 }
 

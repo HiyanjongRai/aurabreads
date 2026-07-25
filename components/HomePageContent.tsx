@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PublicProduct } from "@/lib/products";
 import { useState } from "react";
 
@@ -38,16 +39,56 @@ type Props = {
   initialProducts?: PublicProduct[];
 };
 
+type HomeCartItem = {
+  id: string;
+  name: string;
+  price: number;
+  qty: number;
+  img: string;
+};
+
+type HomeDisplayProduct = {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice: number | null;
+  rating: number;
+  reviews: number;
+  img: string;
+  isCloudinary: boolean;
+};
+
 export default function HomePageContent({ initialProducts = [] }: Props) {
+  const router = useRouter();
   const [wishlist, setWishlist] = useState<Record<string, boolean>>({});
 
   const toggleWishlist = (id: string) => {
     setWishlist((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
+  const openProductDetails = (product: HomeDisplayProduct) => {
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem(
+        'aurabeads_last_viewed_product',
+        JSON.stringify({
+          id: product.id,
+          name: product.name,
+          category: 'Jewelry',
+          price: product.price,
+          salePrice: product.originalPrice ? product.price : null,
+          images: [product.img],
+          stock: 1,
+          status: 'active',
+          featured: false,
+        })
+      );
+    }
+    router.push(`/product/${product.id}`);
+  };
+
   // Use real DB products if available, fallback to demo items
   const hasRealProducts = initialProducts.length > 0;
-  const displayProducts = hasRealProducts
+  const displayProducts: HomeDisplayProduct[] = hasRealProducts
     ? initialProducts.map((p) => ({
         id: p.id,
         name: p.name,
@@ -130,7 +171,25 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
             {displayProducts.map((product) => {
               const isWishlisted = !!wishlist[product.id];
               return (
-                <div key={product.id} className="ab-product-card">
+                <div
+                  key={product.id}
+                  className="ab-product-card"
+                  role="button"
+                  tabIndex={0}
+                  style={{ cursor: 'pointer' }}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (!target.closest('.ab-wishlist-btn') && !target.closest('button')) {
+                      openProductDetails(product);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openProductDetails(product);
+                    }
+                  }}
+                >
                   <div className="ab-product-img-wrap">
                     <Link href={`/product/${product.id}`} style={{ width: '100%', height: '100%', display: 'block' }}>
                       <img
@@ -144,6 +203,9 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
                         }}
                       />
                     </Link>
+                    <div className="ab-card-view-options" aria-hidden="true">
+                      <span>View Options</span>
+                    </div>
                     {product.isCloudinary && (
                       <span style={{
                         position: 'absolute',
@@ -160,8 +222,12 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
                     )}
                     <button
                       className="ab-wishlist-btn"
-                      onClick={() => toggleWishlist(product.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleWishlist(product.id);
+                      }}
                       aria-label={`Add ${product.name} to wishlist`}
+                      type="button"
                       style={{ color: isWishlisted ? '#e11d48' : '#666666' }}
                     >
                       <svg width="18" height="18" fill={isWishlisted ? '#e11d48' : 'none'} stroke={isWishlisted ? '#e11d48' : 'currentColor'} strokeWidth="1.8" viewBox="0 0 24 24">
@@ -185,11 +251,12 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
                     </div>
 
                     <button
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation();
                         if (typeof window !== 'undefined') {
                           try {
                             const stored = localStorage.getItem('aurabeads_cart');
-                            const cartItems: any[] = stored ? JSON.parse(stored) : [];
+                            const cartItems: HomeCartItem[] = stored ? JSON.parse(stored) : [];
                             const existing = cartItems.find((item) => item.id === product.id);
                             if (existing) {
                               existing.qty = (existing.qty || 1) + 1;
@@ -253,7 +320,7 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
           <p className="ab-promo-tag">Limited Time Offer</p>
           <h2 className="ab-promo-title">Get 15% Off Your First Order</h2>
           <p className="ab-promo-sub">Join our community and enjoy exclusive discounts, new arrivals, and style inspiration.</p>
-          <Link href="/register" className="ab-btn-gold">Shop Now</Link>
+          <Link href="/products" className="ab-btn-gold">Shop Now</Link>
         </div>
       </section>
 
@@ -343,7 +410,13 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
           </div>
 
           <div className="ab-footer-bottom">
-            <p>© 2025 AuraBeads Fashion Jewelry. All Rights Reserved.</p>
+            <p className="ab-footer-copy">© 2025 AuraBeads Fashion Jewelry. All Rights Reserved.</p>
+
+            <p className="ab-footer-credit">
+              Design and Develop by <a href="https://hiyanjong.com.np" target="_blank" rel="noopener noreferrer">Hiyanjong Rai</a> —
+              <a href="https://hiyanjong.com.np" target="_blank" rel="noopener noreferrer"> hiyanjong.com.np</a>
+            </p>
+
             <div className="ab-payment-icons">
               <span>Khalti</span>
               <span>eSewa</span>
