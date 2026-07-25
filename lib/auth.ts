@@ -74,18 +74,13 @@ export async function createSession(user: SessionUser) {
     encryptRefreshToken({ userId: user.id, jti }),
   ]);
 
-  // Store refresh token hash in DB
-  try {
-    await db.refreshToken.create({
-      data: {
-        userId: user.id,
-        tokenHash: hashToken(refreshToken),
-        expiresAt: new Date(Date.now() + REFRESH_TOKEN_DURATION_MS),
-      },
-    });
-  } catch (err) {
-    console.warn("[SESSION REFRESH TOKEN STORE SKIP]", err);
-  }
+  await db.refreshToken.create({
+    data: {
+      userId: user.id,
+      tokenHash: hashToken(refreshToken),
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_DURATION_MS),
+    },
+  });
 
   // Set both cookies
   cookieStore.set(ACCESS_TOKEN_COOKIE, accessToken, cookieOptions(ACCESS_TOKEN_DURATION_MS));
@@ -222,16 +217,8 @@ export const getCurrentUser = cache(async (): Promise<SafeUser | null> => {
       },
     });
   } catch (err) {
-    console.warn("[CURRENT USER DB FALLBACK]", err);
-    return {
-      id: session.userId,
-      name: session.name ?? session.email.split("@")[0] ?? "Customer",
-      email: session.email,
-      address: session.address ?? "Not provided",
-      role: session.role,
-      isVerified: session.isVerified ?? false,
-      createdAt: new Date(session.createdAt ?? Date.now()),
-    };
+    console.error("[CURRENT USER DB ERROR]", err);
+    return null;
   }
 });
 

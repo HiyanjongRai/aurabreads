@@ -3,8 +3,12 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { uploadImageToCloudinary } from '@/lib/cloudinary';
-import { createClient } from '@supabase/supabase-js';
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+
+const MAX_IMAGE_COUNT = 6;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 const createProductSchema = z.object({
   name: z.string().trim().min(2, 'Product name must be at least 2 characters'),
@@ -20,6 +24,9 @@ const createProductSchema = z.object({
   material: z.string().trim().optional(),
   color: z.string().trim().optional(),
   style: z.string().trim().optional(),
+}).refine((data) => !data.salePrice || data.salePrice <= data.price, {
+  path: ['salePrice'],
+  message: 'Sale price cannot be higher than regular price.',
 });
 
 export type CreateProductState = {
@@ -31,21 +38,8 @@ export type CreateProductState = {
   fieldErrors?: Record<string, string[] | undefined>;
 };
 
-function getSupabaseAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://twyrkcgwpiyeftrdlumi.supabase.co';
-  const secretKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SECRET_KEY ||
-    '';
-  return createClient(url, secretKey, {
-    global: {
-      headers: {
-        apikey: secretKey,
-        Authorization: `Bearer ${secretKey}`,
-      },
-    },
-    auth: { persistSession: false },
-  });
+function isAllowedImage(value: FormDataEntryValue): value is File {
+  return value instanceof File && value.size > 0;
 }
 
 export async function createProductAction(
@@ -98,48 +92,39 @@ export async function createProductAction(
 
   const data = parsed.data;
 
-  // 3. Handle Cloudinary Image Uploads
-  const uploadedImageUrls: string[] = [];
+  const imageFiles = formData.getAll('images').filter(isAllowedImage);
+  if (imageFiles.length === 0) {
+    return { error: 'Upload at least one product image.' };
+  }
 
-  // Check for uploaded files
-  const imageFiles = formData.getAll('images') as File[];
+  if (imageFiles.length > MAX_IMAGE_COUNT) {
+    return { error: `Upload up to ${MAX_IMAGE_COUNT} product images.` };
+  }
+
   for (const file of imageFiles) {
-    if (file && file.size > 0 && file.type.startsWith('image/')) {
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const url = await uploadImageToCloudinary(buffer, 'aurabeads_products');
-        uploadedImageUrls.push(url);
-      } catch (uploadErr) {
-        console.error('[PRODUCT CREATION IMAGE UPLOAD ERROR]', uploadErr);
-        // Fallback: convert file to compressed base64 data URL
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-        const dataUrl = `data:${file.type};base64,${buffer.toString('base64')}`;
-        uploadedImageUrls.push(dataUrl);
-      }
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
+      return { error: `${file.name || 'Selected file'} is not a supported image type.` };
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      return { error: `${file.name || 'Selected file'} is larger than 5MB.` };
     }
   }
 
-  // Check for base64 image strings from form preview state
-  const base64Images = formData.getAll('imageUrls') as string[];
-  for (const imgStr of base64Images) {
-    if (!imgStr) continue;
-    if (imgStr.startsWith('http')) {
-      if (!uploadedImageUrls.includes(imgStr)) uploadedImageUrls.push(imgStr);
-    } else if (imgStr.startsWith('data:image/')) {
-      try {
-        const url = await uploadImageToCloudinary(imgStr, 'aurabeads_products');
-        if (!uploadedImageUrls.includes(url)) uploadedImageUrls.push(url);
-      } catch (uploadErr) {
-        console.error('[PRODUCT BASE64 UPLOAD ERROR]', uploadErr);
-        // Fail-safe: Save compressed base64 image directly so user image is never lost!
-        if (!uploadedImageUrls.includes(imgStr)) uploadedImageUrls.push(imgStr);
-      }
+  const uploadedImageUrls: string[] = [];
+  try {
+    for (const file of imageFiles) {
+      const arrayBuffer = await file.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const url = await uploadImageToCloudinary(buffer, `aurabeads/products/${user.id}`);
+      uploadedImageUrls.push(url);
     }
+  } catch (uploadErr) {
+    console.error('[PRODUCT IMAGE UPLOAD ERROR]', uploadErr);
+    return { error: 'Image upload failed. Please try again.' };
   }
 
-  // 4. Save Product to Supabase Postgres DB (Prisma DB first, with Supabase REST fallback)
+  // 3. Save Product to the application database. Do not claim success if persistence fails.
   try {
     const db = getDb();
     const newProduct = await db.product.create({
@@ -162,61 +147,18 @@ export async function createProductAction(
       },
     });
 
+    revalidatePath('/seller');
+    revalidatePath('/seller/products');
+    revalidatePath('/admin/products');
+    revalidatePath('/');
+
     return {
       success: true,
       productId: newProduct.id,
-      message: 'Product published & saved to Supabase Postgres with Cloudinary images!',
+      message: 'Product saved successfully.',
     };
   } catch (dbErr) {
-    console.warn('[PRISMA DB SAVE ATTEMPT FAILED - USING SUPABASE REST FALLBACK]', dbErr instanceof Error ? dbErr.message : dbErr);
-
-    // Fallback: Save directly via Supabase REST API
-    try {
-      const admin = getSupabaseAdmin();
-      const { data: inserted, error: restErr } = await admin
-        .from('Product')
-        .insert([{
-          sellerId: user.id,
-          name: data.name,
-          sku: data.sku || null,
-          category: data.category,
-          shortDescription: data.shortDescription || null,
-          fullDescription: data.fullDescription || null,
-          price: data.price,
-          salePrice: data.salePrice || null,
-          stock: data.stock,
-          images: uploadedImageUrls,
-          status: data.status,
-          featured: data.featured,
-          material: data.material || null,
-          color: data.color || null,
-          style: data.style || null,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }])
-        .select()
-        .single();
-
-      if (restErr) {
-        console.error('[SUPABASE REST INSERT ERROR]', restErr.message);
-        // If table doesn't exist yet in Supabase Postgres, return success acknowledging Cloudinary + local save
-        return {
-          success: true,
-          message: `Product published! Uploaded ${uploadedImageUrls.length} image(s) to Cloudinary.`,
-        };
-      }
-
-      return {
-        success: true,
-        productId: inserted?.id,
-        message: 'Product saved to Supabase & Cloudinary successfully!',
-      };
-    } catch (fallbackErr) {
-      console.error('[SUPABASE REST EXCEPTION]', fallbackErr);
-      return {
-        success: true,
-        message: `Product published! Uploaded ${uploadedImageUrls.length} image(s) to Cloudinary.`,
-      };
-    }
+    console.error('[PRODUCT CREATE DB ERROR]', dbErr);
+    return { error: 'Product could not be saved. Please try again.' };
   }
 }

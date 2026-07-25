@@ -2,9 +2,17 @@ import "server-only";
 
 import crypto from "crypto";
 
-const apiKey = process.env.CLOUDINARY_API_KEY || "115994652678237";
-const apiSecret = process.env.CLOUDINARY_API_SECRET || "l-LNv-xFzvEHUpIeTR7wLL_8lEs";
-const cloudName = process.env.CLOUDINARY_CLOUD_NAME || "x7qchau7";
+function getCloudinaryConfig() {
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+
+  if (!apiKey || !apiSecret || !cloudName) {
+    throw new Error("Cloudinary is not configured.");
+  }
+
+  return { apiKey, apiSecret, cloudName };
+}
 
 /**
  * Uploads a Buffer or base64/Data URL to Cloudinary using the REST API.
@@ -14,6 +22,7 @@ export async function uploadImageToCloudinary(
   fileData: string | Buffer,
   folder = "aurabeads_products"
 ): Promise<string> {
+  const { apiKey, apiSecret, cloudName } = getCloudinaryConfig();
   const timestamp = Math.floor(Date.now() / 1000);
 
   // Build the SHA-1 signature for authenticated upload
