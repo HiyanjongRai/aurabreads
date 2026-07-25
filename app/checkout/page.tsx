@@ -3,19 +3,95 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Lock, CreditCard, Truck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ShieldCheck, Lock, CreditCard, Truck, AlertCircle } from 'lucide-react';
+
+type FormErrors = {
+  email?: string;
+  phone?: string;
+  firstName?: string;
+  lastName?: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  postal?: string;
+  termsAccepted?: string;
+};
 
 export default function CheckoutPage() {
   const [completed, setCompleted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [formData, setFormData] = useState({
+    email: '',
+    phone: '',
+    firstName: '',
+    lastName: '',
+    street: '',
+    city: '',
+    state: '',
+    postal: '',
+    promoCode: '',
+    orderNotes: '',
+    termsAccepted: false,
+  });
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : false;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+    // Clear error for this field when user starts typing
+    if (errors[name as keyof FormErrors]) {
+      setErrors(prev => ({ ...prev, [name]: undefined }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Valid email is required';
+    }
+    if (!formData.phone || formData.phone.length < 10) {
+      newErrors.phone = 'Valid phone number is required';
+    }
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    }
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    }
+    if (!formData.street.trim()) {
+      newErrors.street = 'Street address is required';
+    }
+    if (!formData.city.trim()) {
+      newErrors.city = 'City is required';
+    }
+    if (!formData.state.trim()) {
+      newErrors.state = 'State/Province is required';
+    }
+    if (!formData.postal.trim()) {
+      newErrors.postal = 'Postal code is required';
+    }
+    if (!formData.termsAccepted) {
+      newErrors.termsAccepted = 'You must accept the terms';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setCompleted(true);
-    }, 1200);
+    if (validateForm()) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setCompleted(true);
+      }, 1200);
+    }
   };
 
   if (completed) {
@@ -61,6 +137,26 @@ export default function CheckoutPage() {
             <span>256-Bit Encrypted Secure Checkout</span>
           </div>
         </div>
+        
+        {/* Progress Indicator */}
+        <div className="bg-gray-50 px-4 py-3 sm:px-6">
+          <div className="mx-auto max-w-6xl flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-600 text-white font-bold">1</div>
+              <span className="font-medium text-gray-900">Contact</span>
+            </div>
+            <div className="h-0.5 flex-1 mx-3 bg-gold-200" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gold-200 text-gold-700 font-bold">2</div>
+              <span className="text-gray-600">Shipping</span>
+            </div>
+            <div className="h-0.5 flex-1 mx-3 bg-gray-200" />
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-gray-500 font-bold">3</div>
+              <span className="text-gray-500">Payment</span>
+            </div>
+          </div>
+        </div>
       </header>
 
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -86,19 +182,35 @@ export default function CheckoutPage() {
                     <label className="text-xs font-semibold text-gray-700">Email Address</label>
                     <input
                       type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
                       required
                       placeholder="you@example.com"
-                      className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                      className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                        errors.email
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                      }`}
                     />
+                    {errors.email && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={12} />{errors.email}</p>}
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-gray-700">Phone Number</label>
                     <input
                       type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
                       required
                       placeholder="+977 9800000000"
-                      className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                      className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                        errors.phone
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                      }`}
                     />
+                    {errors.phone && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={12} />{errors.phone}</p>}
                   </div>
                 </div>
               </div>
@@ -115,57 +227,105 @@ export default function CheckoutPage() {
                       <label className="text-xs font-semibold text-gray-700">First Name</label>
                       <input
                         type="text"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
                         required
                         placeholder="Jane"
-                        className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                        className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                          errors.firstName
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        }`}
                       />
+                      {errors.firstName && <p className="text-xs text-red-600">{errors.firstName}</p>}
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-700">Last Name</label>
                       <input
                         type="text"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
                         required
                         placeholder="Smith"
-                        className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                        className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                          errors.lastName
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        }`}
                       />
+                      {errors.lastName && <p className="text-xs text-red-600">{errors.lastName}</p>}
                     </div>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-gray-700">Street Address</label>
                     <input
                       type="text"
+                      name="street"
+                      value={formData.street}
+                      onChange={handleInputChange}
                       required
                       placeholder="123 Luxury Avenue, Suite 400"
-                      className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                      className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                        errors.street
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                          : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                      }`}
                     />
+                    {errors.street && <p className="text-xs text-red-600">{errors.street}</p>}
                   </div>
                   <div className="grid gap-4 sm:grid-cols-3">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-700">City</label>
                       <input
                         type="text"
+                        name="city"
+                        value={formData.city}
+                        onChange={handleInputChange}
                         required
                         placeholder="Kathmandu"
-                        className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                        className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                          errors.city
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        }`}
                       />
+                      {errors.city && <p className="text-xs text-red-600">{errors.city}</p>}
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-700">State / Province</label>
                       <input
                         type="text"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleInputChange}
                         required
                         placeholder="Bagmati"
-                        className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                        className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                          errors.state
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        }`}
                       />
+                      {errors.state && <p className="text-xs text-red-600">{errors.state}</p>}
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-gray-700">Postal Code</label>
                       <input
                         type="text"
+                        name="postal"
+                        value={formData.postal}
+                        onChange={handleInputChange}
                         required
                         placeholder="44600"
-                        className="h-11 w-full rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                        className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
+                          errors.postal
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
+                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        }`}
                       />
+                      {errors.postal && <p className="text-xs text-red-600">{errors.postal}</p>}
                     </div>
                   </div>
                 </div>
@@ -195,7 +355,63 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Submit Checkout Button */}
+              {/* Promo Code & Special Instructions */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100 space-y-4">
+                  <h2 className="font-serif text-lg font-medium text-gray-900">Have a Promo Code?</h2>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      name="promoCode"
+                      value={formData.promoCode}
+                      onChange={handleInputChange}
+                      placeholder="Enter promo code"
+                      className="flex-1 h-11 rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
+                    />
+                    <button
+                      type="button"
+                      className="px-6 h-11 bg-gold-600 text-white text-sm font-semibold rounded-xl hover:bg-gold-700 transition"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100 space-y-4">
+                  <h2 className="font-serif text-lg font-medium text-gray-900">Special Instructions</h2>
+                  <textarea
+                    name="orderNotes"
+                    value={formData.orderNotes}
+                    onChange={handleInputChange}
+                    placeholder="Any special requests or instructions for your order?"
+                    className="w-full h-20 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200 resize-none"
+                  />
+                </div>
+              </div>
+
+              {/* Terms & Conditions */}
+              <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100 space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="termsAccepted"
+                    checked={formData.termsAccepted}
+                    onChange={handleInputChange}
+                    className={`mt-1 h-5 w-5 rounded border-2 accent-gold-600 cursor-pointer ${
+                      errors.termsAccepted ? 'border-red-500' : 'border-gray-300'
+                    }`}
+                  />
+                  <div>
+                    <span className="block text-sm font-medium text-gray-900">
+                      I agree to the Terms of Service and Privacy Policy
+                    </span>
+                    <span className="block text-xs text-gray-500 mt-1">
+                      By proceeding, you agree to our handmade jewelry care guidelines and our return policy (14-day returns).
+                    </span>
+                  </div>
+                </label>
+                {errors.termsAccepted && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={12} />{errors.termsAccepted}</p>}
+              </div>
               <button
                 type="submit"
                 disabled={isSubmitting}

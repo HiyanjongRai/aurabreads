@@ -4,30 +4,13 @@ import { getCurrentUser } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 import { uploadImageToCloudinary } from '@/lib/cloudinary';
 import { revalidatePath } from 'next/cache';
-import { z } from 'zod';
-
-const MAX_IMAGE_COUNT = 6;
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-
-const createProductSchema = z.object({
-  name: z.string().trim().min(2, 'Product name must be at least 2 characters'),
-  sku: z.string().trim().optional(),
-  category: z.string().trim().min(1, 'Category is required'),
-  shortDescription: z.string().trim().max(160, 'Short description max 160 characters').optional(),
-  fullDescription: z.string().trim().optional(),
-  price: z.number().positive('Price must be greater than 0'),
-  salePrice: z.number().positive().optional().nullable(),
-  stock: z.number().int().min(0, 'Stock cannot be negative').default(0),
-  status: z.enum(['active', 'draft', 'archived']).default('active'),
-  featured: z.boolean().default(false),
-  material: z.string().trim().optional(),
-  color: z.string().trim().optional(),
-  style: z.string().trim().optional(),
-}).refine((data) => !data.salePrice || data.salePrice <= data.price, {
-  path: ['salePrice'],
-  message: 'Sale price cannot be higher than regular price.',
-});
+import {
+  productValidationSchema,
+  MAX_IMAGE_FILE_SIZE,
+  MAX_TOTAL_IMAGE_SIZE,
+  MAX_PRODUCT_IMAGES_COUNT,
+  ALLOWED_IMAGE_TYPES,
+} from '@/lib/validation';
 
 export type CreateProductState = {
   error?: string;
@@ -38,7 +21,7 @@ export type CreateProductState = {
   fieldErrors?: Record<string, string[] | undefined>;
 };
 
-function isAllowedImage(value: FormDataEntryValue): value is File {
+function isAllowedFile(value: FormDataEntryValue): value is File {
   return value instanceof File && value.size > 0;
 }
 
@@ -54,13 +37,14 @@ export async function createProductAction(
 
   // 2. Parse text & number fields
   const rawPrice = parseFloat((formData.get('price') as string) || '0');
-  const rawSalePrice = formData.get('salePrice') ? parseFloat(formData.get('salePrice') as string) : null;
+  const rawSalePriceStr = formData.get('salePrice') as string;
+  const rawSalePrice = rawSalePriceStr && rawSalePriceStr.trim() !== '' ? parseFloat(rawSalePriceStr) : null;
   const rawStock = parseInt((formData.get('stock') as string) || '0', 10);
 
   const rawFields = {
     name: (formData.get('name') as string) || '',
     sku: (formData.get('sku') as string) || '',
-    category: (formData.get('category') as string) || 'necklaces',
+    category: (formData.get('category') as string) || '',
     shortDescription: (formData.get('shortDescription') as string) || '',
     fullDescription: (formData.get('fullDescription') as string) || '',
     price: isNaN(rawPrice) ? 0 : rawPrice,
@@ -73,7 +57,8 @@ export async function createProductAction(
     style: (formData.get('style') as string) || '',
   };
 
-  const parsed = createProductSchema.safeParse(rawFields);
+  // 3. Schema validation with Zod
+  const parsed = productValidationSchema.safeParse(rawFields);
   if (!parsed.success) {
     return {
       fields: {
@@ -92,39 +77,82 @@ export async function createProductAction(
 
   const data = parsed.data;
 
-  const imageFiles = formData.getAll('images').filter(isAllowedImage);
-  if (imageFiles.length === 0) {
-    return { error: 'Upload at least one product image.' };
+  // 4. Image Extraction & Validation
+  const rawFiles = formData.getAll('images').filter(isAllowedFile);
+  const rawBase64s = formData.getAll('imageUrls').filter((val): val is string => typeof val === 'string' && val.startsWith('data:image/'));
+
+  const totalImageCount = rawFiles.length + rawBase64s.length;
+
+  if (totalImageCount === 0) {
+    return { error: 'Validation Error: Please upload at least 1 product image.' };
   }
 
-  if (imageFiles.length > MAX_IMAGE_COUNT) {
-    return { error: `Upload up to ${MAX_IMAGE_COUNT} product images.` };
+  if (totalImageCount > MAX_PRODUCT_IMAGES_COUNT) {
+    return { error: `Validation Error: You can upload a maximum of ${MAX_PRODUCT_IMAGES_COUNT} images per product.` };
   }
 
-  for (const file of imageFiles) {
-    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
-      return { error: `${file.name || 'Selected file'} is not a supported image type.` };
+  let cumulativeSize = 0;
+  const imageBuffers: { buffer: Buffer; fileName: string }[] = [];
+
+  // 4a. Validate File instances
+  for (let i = 0; i < rawFiles.length; i++) {
+    const file = rawFiles[i];
+    const fileName = file.name || `image_${i + 1}`;
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return { error: `Invalid File Type: "${fileName}" is not supported. Only JPG, PNG, and WEBP images are allowed.` };
     }
 
-    if (file.size > MAX_IMAGE_SIZE) {
-      return { error: `${file.name || 'Selected file'} is larger than 5MB.` };
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+      return { error: `File Too Large: "${fileName}" is ${sizeMb}MB. Maximum allowed image size is 5MB.` };
     }
+
+    cumulativeSize += file.size;
+    const arrayBuffer = await file.arrayBuffer();
+    imageBuffers.push({ buffer: Buffer.from(arrayBuffer), fileName });
   }
 
+  // 4b. Validate Base64 image strings (from canvas compressor)
+  for (let i = 0; i < rawBase64s.length; i++) {
+    const base64Str = rawBase64s[i];
+    const mimeMatch = base64Str.match(/^data:(image\/[a-zA-Z]+);base64,/);
+
+    if (!mimeMatch || !ALLOWED_IMAGE_TYPES.includes(mimeMatch[1])) {
+      return { error: `Invalid Image Format: Image #${i + 1} is not a valid JPEG, PNG, or WEBP image.` };
+    }
+
+    const base64Data = base64Str.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    if (buffer.length > MAX_IMAGE_FILE_SIZE) {
+      const sizeMb = (buffer.length / (1024 * 1024)).toFixed(1);
+      return { error: `File Too Large: Image #${i + 1} is ${sizeMb}MB. Maximum allowed size per image is 5MB.` };
+    }
+
+    cumulativeSize += buffer.length;
+    imageBuffers.push({ buffer, fileName: `compressed_image_${i + 1}.jpg` });
+  }
+
+  // 4c. Validate Cumulative Size
+  if (cumulativeSize > MAX_TOTAL_IMAGE_SIZE) {
+    const totalMb = (cumulativeSize / (1024 * 1024)).toFixed(1);
+    return { error: `Total Upload Size Exceeded: Combined image size is ${totalMb}MB. Maximum total upload allowed is 15MB.` };
+  }
+
+  // 5. Upload to Cloudinary CDN
   const uploadedImageUrls: string[] = [];
   try {
-    for (const file of imageFiles) {
-      const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const url = await uploadImageToCloudinary(buffer, `aurabeads/products/${user.id}`);
+    for (const item of imageBuffers) {
+      const url = await uploadImageToCloudinary(item.buffer, `aurabeads/products/${user.id}`);
       uploadedImageUrls.push(url);
     }
   } catch (uploadErr) {
     console.error('[PRODUCT IMAGE UPLOAD ERROR]', uploadErr);
-    return { error: 'Image upload failed. Please try again.' };
+    return { error: 'Image CDN Upload Failed: Unable to process images. Please try again.' };
   }
 
-  // 3. Save Product to the application database. Do not claim success if persistence fails.
+  // 6. Save Product to DB
   try {
     const db = getDb();
     const newProduct = await db.product.create({
@@ -155,10 +183,10 @@ export async function createProductAction(
     return {
       success: true,
       productId: newProduct.id,
-      message: 'Product saved successfully.',
+      message: 'Product published successfully with verified images & details.',
     };
   } catch (dbErr) {
     console.error('[PRODUCT CREATE DB ERROR]', dbErr);
-    return { error: 'Product could not be saved. Please try again.' };
+    return { error: 'Database Error: Could not save product. Please verify all details and try again.' };
   }
 }

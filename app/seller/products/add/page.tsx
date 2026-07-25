@@ -91,30 +91,60 @@ export default function AddNewProductPage() {
   const [featured, setFeatured] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_COUNT = 6;
+  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValidationError(null);
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    const fileList = Array.from(files);
+
+    if (previews.length + fileList.length > MAX_COUNT) {
+      setValidationError(`Maximum ${MAX_COUNT} images allowed per product. You have already added ${previews.length}.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
+
+    for (const file of fileList) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setValidationError(`"${file.name}" is not a supported image format. Please select JPG, PNG, or WEBP.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
+        setValidationError(`"${file.name}" is ${sizeMb}MB. Maximum image size allowed is 5MB.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+    }
 
     setIsProcessingImages(true);
     try {
       const compressed: string[] = [];
-      for (const file of Array.from(files)) {
-        if (file.type.startsWith('image/')) {
-          const dataUrl = await compressImage(file);
-          if (dataUrl) compressed.push(dataUrl);
-        }
+      for (const file of fileList) {
+        const dataUrl = await compressImage(file);
+        if (dataUrl) compressed.push(dataUrl);
       }
       setPreviews((prev) => [...prev, ...compressed]);
     } catch (err) {
       console.error('Image compression error:', err);
+      setValidationError('Failed to process image files. Please try another image.');
     } finally {
       setIsProcessingImages(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
   const removeImage = (index: number) => {
+    setValidationError(null);
     const updated = [...previews];
     updated.splice(index, 1);
     setPreviews(updated);
@@ -135,13 +165,13 @@ export default function AddNewProductPage() {
         }}>
           <Check size={18} color="#34d399" />
           <span style={{ fontSize: 13, fontWeight: 700 }}>
-            {state.message || 'Product published to Supabase & Cloudinary!'}
+            {state.message || 'Product published successfully!'}
           </span>
         </div>
       )}
 
-      {/* Error Banner */}
-      {state?.error && (
+      {/* Validation Error Banner (Client & Server) */}
+      {(validationError || state?.error) && (
         <div style={{
           padding: '14px 18px',
           borderRadius: 14,
@@ -154,7 +184,7 @@ export default function AddNewProductPage() {
           gap: 10,
         }}>
           <AlertCircle size={18} style={{ flexShrink: 0 }} />
-          <span>{state.error}</span>
+          <span>{validationError || state?.error}</span>
         </div>
       )}
 
@@ -361,6 +391,9 @@ export default function AddNewProductPage() {
                     placeholder="e.g. 2800"
                     style={inputContainerStyle}
                   />
+                  {state?.fieldErrors?.salePrice && (
+                    <p style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{state.fieldErrors.salePrice[0]}</p>
+                  )}
                 </div>
                 <div>
                   <label style={labelStyle}>Stock Quantity <span style={{ color: '#f87171' }}>*</span></label>
@@ -372,6 +405,9 @@ export default function AddNewProductPage() {
                     required
                     style={inputContainerStyle}
                   />
+                  {state?.fieldErrors?.stock && (
+                    <p style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{state.fieldErrors.stock[0]}</p>
+                  )}
                 </div>
               </div>
             </div>
