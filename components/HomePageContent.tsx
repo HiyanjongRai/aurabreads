@@ -180,6 +180,52 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
                       <StarRating rating={product.rating} />
                       <span className="ab-review-count">({product.reviews})</span>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          try {
+                            const stored = localStorage.getItem('aurabeads_cart');
+                            const cartItems: any[] = stored ? JSON.parse(stored) : [];
+                            const existing = cartItems.find((item) => item.id === product.id);
+                            if (existing) {
+                              existing.qty = (existing.qty || 1) + 1;
+                            } else {
+                              cartItems.push({
+                                id: product.id,
+                                name: product.name,
+                                price: product.price,
+                                qty: 1,
+                                img: product.img,
+                              });
+                            }
+                            localStorage.setItem('aurabeads_cart', JSON.stringify(cartItems));
+                            window.dispatchEvent(new Event('aurabeads_cart_updated'));
+                          } catch (e) {
+                            console.error('Add to cart error:', e);
+                          }
+                        }
+                      }}
+                      style={{
+                        marginTop: '10px',
+                        width: '100%',
+                        padding: '8px 12px',
+                        borderRadius: '10px',
+                        background: '#111827',
+                        color: '#ffffff',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        transition: 'background 0.2s',
+                      }}
+                    >
+                      <span>Add to Bag</span>
+                    </button>
                   </div>
                 </div>
               );

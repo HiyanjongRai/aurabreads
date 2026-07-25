@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { X, ShoppingBag, ArrowRight, Trash2, Tag, Truck, ShieldCheck, Sparkles, Plus, Minus } from 'lucide-react';
 
-type CartItem = {
+export type CartItem = {
   id: string;
   name: string;
   price: number;
@@ -13,11 +13,6 @@ type CartItem = {
   img: string;
   category?: string;
 };
-
-const initialItems: CartItem[] = [
-  { id: '1', name: 'Twist Knot Earrings', price: 18, qty: 1, img: '/product-earrings1.png', category: 'Earrings' },
-  { id: '2', name: 'Chunky Hoop Earrings', price: 20, qty: 1, img: '/product-earrings2.png', category: 'Earrings' },
-];
 
 const FREE_SHIPPING_THRESHOLD = 50;
 const SAMPLE_PROMO_CODE = 'WELCOME10';
@@ -29,10 +24,39 @@ type CartDrawerProps = {
 };
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
-  const [items, setItems] = useState<CartItem[]>(initialItems);
+  const [items, setItems] = useState<CartItem[]>([]);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [promoError, setPromoError] = useState('');
+
+  // Load dynamic cart items from localStorage on mount & when drawer opens
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('aurabeads_cart');
+        if (stored) {
+          setItems(JSON.parse(stored));
+        } else {
+          setItems([]);
+        }
+      } catch {
+        setItems([]);
+      }
+    }
+  }, [isOpen]);
+
+  // Sync cart items to localStorage and notify components
+  const updateCart = (newItems: CartItem[]) => {
+    setItems(newItems);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('aurabeads_cart', JSON.stringify(newItems));
+        window.dispatchEvent(new Event('aurabeads_cart_updated'));
+      } catch (e) {
+        console.error('Cart sync error:', e);
+      }
+    }
+  };
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   const discountAmount = appliedPromo ? subtotal * PROMO_DISCOUNT : 0;
@@ -42,21 +66,22 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const totalItemCount = items.reduce((sum, item) => sum + item.qty, 0);
 
   const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+    const updated = items.filter((item) => item.id !== id);
+    updateCart(updated);
   };
 
   const updateQty = (id: string, delta: number) => {
-    setItems((prev) =>
-      prev
-        .map((item) => {
-          if (item.id === id) {
-            const newQty = item.qty + delta;
-            return newQty > 0 ? { ...item, qty: newQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean) as CartItem[],
-    );
+    const updated = items
+      .map((item) => {
+        if (item.id === id) {
+          const newQty = item.qty + delta;
+          return newQty > 0 ? { ...item, qty: newQty } : null;
+        }
+        return item;
+      })
+      .filter(Boolean) as CartItem[];
+
+    updateCart(updated);
   };
 
   const handleApplyPromo = (codeToApply?: string) => {
@@ -146,14 +171,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               <div className="space-y-1">
                 <h3 className="font-serif text-xl font-bold text-gray-900">Your shopping bag is empty</h3>
                 <p className="max-w-xs text-xs text-gray-500 leading-relaxed">
-                  Explore our luxury handcrafted jewelry collections and add your favorite pieces.
+                  Explore our handcrafted jewelry collection and add your favorite pieces to your cart.
                 </p>
               </div>
               <button
                 onClick={onClose}
                 className="mt-4 rounded-xl bg-gradient-to-r from-gray-900 to-gray-800 px-6 py-3 text-xs font-bold text-white shadow-md transition hover:from-black hover:to-gray-900 hover:shadow-lg"
               >
-                Explore Collection →
+                Start Shopping →
               </button>
             </div>
           ) : (
@@ -164,7 +189,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                   className="group flex gap-3.5 rounded-2xl border border-gray-100 bg-white p-3.5 shadow-sm transition hover:border-gold-200 hover:shadow-md"
                 >
                   <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-xl bg-gray-50 border border-gray-100">
-                    <Image src={item.img} alt={item.name} fill className="object-cover transition duration-300 group-hover:scale-105" />
+                    <img src={item.img} alt={item.name} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                   </div>
 
                   <div className="flex flex-1 flex-col justify-between min-w-0">

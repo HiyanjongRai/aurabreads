@@ -28,7 +28,33 @@ function NavbarContent() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<AuthTab>("login");
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const [user, setUser] = useState<UserSession | null>(null);
+
+  const syncCartCount = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('aurabeads_cart');
+        if (stored) {
+          const items = JSON.parse(stored);
+          const totalQty = items.reduce((sum: number, item: { qty?: number }) => sum + (item.qty || 1), 0);
+          setCartCount(totalQty);
+        } else {
+          setCartCount(0);
+        }
+      } catch {
+        setCartCount(0);
+      }
+    }
+  };
+
+  useEffect(() => {
+    syncCartCount();
+    window.addEventListener('aurabeads_cart_updated', syncCartCount);
+    return () => {
+      window.removeEventListener('aurabeads_cart_updated', syncCartCount);
+    };
+  }, []);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const searchParams = useSearchParams();
@@ -218,7 +244,7 @@ function NavbarContent() {
                 onClick={() => setCartOpen(true)}
               >
                 <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                <span className="ab-cart-count">2</span>
+                {cartCount > 0 && <span className="ab-cart-count">{cartCount}</span>}
               </button>
               {/* Mobile hamburger */}
               <button className="ab-hamburger" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
