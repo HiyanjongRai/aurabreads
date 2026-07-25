@@ -5,39 +5,98 @@ import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { CartDrawer } from "@/components/CartDrawer";
+import { logout } from "@/app/actions/auth";
+import { User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 
 type AuthTab = "login" | "register";
+
+type UserSession = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+};
+
+function getDashboardUrl(role?: string) {
+  if (role === "ADMIN") return "/admin";
+  if (role === "SELLER") return "/seller";
+  return "/dashboard";
+}
 
 function NavbarContent() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<AuthTab>("login");
   const [cartOpen, setCartOpen] = useState(false);
+  const [user, setUser] = useState<UserSession | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Check auth session from API
+  const checkSession = async () => {
+    try {
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.user) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch {
+      setUser(null);
+    }
+  };
+
+  useEffect(() => {
+    checkSession();
+  }, [authOpen]);
 
   // Check if URL has ?auth=login or ?auth=register
   useEffect(() => {
     const authParam = searchParams.get("auth");
     if (authParam === "login" || authParam === "register") {
-      setAuthTab(authParam);
-      setAuthOpen(true);
+      if (user) {
+        // Logged in user: redirect straight to dashboard
+        router.replace(getDashboardUrl(user.role));
+      } else {
+        setAuthTab(authParam);
+        setAuthOpen(true);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, user, router]);
 
   function openAuth(tab: AuthTab = "login") {
-    setAuthTab(tab);
-    setAuthOpen(true);
+    if (user) {
+      router.push(getDashboardUrl(user.role));
+    } else {
+      setAuthTab(tab);
+      setAuthOpen(true);
+    }
   }
 
   function handleCloseAuth() {
     setAuthOpen(false);
-    // Clean up query param if present
+    checkSession();
     if (searchParams.get("auth")) {
       router.replace("/", { scroll: false });
     }
   }
+
+  function handleAccountClick() {
+    if (user) {
+      router.push(getDashboardUrl(user.role));
+    } else {
+      openAuth("login");
+    }
+  }
+
+  const initial = user?.name ? user.name[0].toUpperCase() : "U";
 
   return (
     <>
@@ -96,15 +155,60 @@ function NavbarContent() {
               <button aria-label="Search" className="ab-icon-btn">
                 <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
               </button>
-              {/* Account icon → opens auth modal */}
-              <button
-                aria-label="Account"
-                className="ab-icon-btn"
-                onClick={() => openAuth("login")}
-                id="nav-account-btn"
-              >
-                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-              </button>
+
+              {/* Account button: Logged-in vs Logged-out */}
+              {user ? (
+                <div className="relative group">
+                  <button
+                    aria-label="Account"
+                    className="ab-icon-btn flex items-center gap-1.5 px-2 py-1 rounded-full border border-gold-400/40 bg-gold-50/50 hover:border-gold-500 transition"
+                    onClick={handleAccountClick}
+                    id="nav-account-btn"
+                  >
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-gold-600 to-amber-400 text-black font-extrabold text-xs flex items-center justify-center shadow-sm">
+                      {initial}
+                    </div>
+                    <span className="text-xs font-bold text-gray-900 hidden sm:inline-block max-w-[80px] truncate">
+                      {user.name.split(" ")[0]}
+                    </span>
+                    <ChevronDown size={12} className="text-gray-500 hidden sm:inline-block" />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  <div className="absolute right-0 top-full mt-1 w-48 rounded-2xl bg-white p-2 shadow-2xl border border-gray-100 hidden group-hover:block z-50 animate-fade-in">
+                    <div className="px-3 py-2 border-b border-gray-100 mb-1">
+                      <p className="text-xs font-bold text-gray-900 truncate">{user.name}</p>
+                      <p className="text-[10px] text-gold-700 font-semibold uppercase">{user.role} Account</p>
+                    </div>
+                    <Link
+                      href={getDashboardUrl(user.role)}
+                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gold-50 hover:text-gold-800 transition"
+                    >
+                      <LayoutDashboard size={14} />
+                      <span>Dashboard</span>
+                    </Link>
+                    <form action={logout}>
+                      <button
+                        type="submit"
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition"
+                      >
+                        <LogOut size={14} />
+                        <span>Sign Out</span>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  aria-label="Account"
+                  className="ab-icon-btn"
+                  onClick={() => openAuth("login")}
+                  id="nav-account-btn"
+                >
+                  <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                </button>
+              )}
+
               <button aria-label="Wishlist" className="ab-icon-btn">
                 <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
               </button>
@@ -136,18 +240,42 @@ function NavbarContent() {
             <Link href="#" onClick={() => setMobileOpen(false)}>Rings</Link>
             <Link href="/seller" onClick={() => setMobileOpen(false)}>Sell</Link>
             <hr style={{ margin: '8px 0', borderColor: 'var(--border)' }} />
-            <button
-              onClick={() => { setMobileOpen(false); openAuth("login"); }}
-              className="ab-mobile-auth-btn"
-            >
-              Sign In
-            </button>
-            <button
-              onClick={() => { setMobileOpen(false); openAuth("register"); }}
-              className="ab-mobile-auth-btn ab-mobile-auth-btn--register"
-            >
-              Create Account
-            </button>
+            
+            {user ? (
+              <>
+                <Link
+                  href={getDashboardUrl(user.role)}
+                  onClick={() => setMobileOpen(false)}
+                  className="ab-mobile-auth-btn flex items-center justify-center gap-2"
+                >
+                  <LayoutDashboard size={15} />
+                  <span>Go to Dashboard</span>
+                </Link>
+                <form action={logout} className="w-full mt-2">
+                  <button
+                    type="submit"
+                    className="w-full text-center py-2.5 text-xs font-bold text-red-600 bg-red-50 rounded-xl"
+                  >
+                    Sign Out ({user.name.split(" ")[0]})
+                  </button>
+                </form>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => { setMobileOpen(false); openAuth("login"); }}
+                  className="ab-mobile-auth-btn"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => { setMobileOpen(false); openAuth("register"); }}
+                  className="ab-mobile-auth-btn ab-mobile-auth-btn--register"
+                >
+                  Create Account
+                </button>
+              </>
+            )}
           </div>
         )}
       </header>

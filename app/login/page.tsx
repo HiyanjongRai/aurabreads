@@ -3,6 +3,10 @@ import { getCurrentUser } from "@/lib/auth";
 
 export default async function LoginPage() {
   const user = await getCurrentUser();
-  if (user) redirect("/dashboard");
+  if (user) {
+    if (user.role === "ADMIN") redirect("/admin");
+    if (user.role === "SELLER") redirect("/seller");
+    redirect("/dashboard");
+  }
   redirect("/?auth=login");
 }
