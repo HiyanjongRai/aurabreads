@@ -450,7 +450,10 @@ export function SellerShell({ children, user }: SellerShellProps) {
               <Menu size={20} />
             </button>
 
-            <div>
+            <Link
+              href="/seller"
+              style={{ display: "flex", flexDirection: "column", textDecoration: "none", color: "inherit" }}
+            >
               <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>AuraBeads</p>
               <h1
                 style={{
@@ -463,7 +466,7 @@ export function SellerShell({ children, user }: SellerShellProps) {
               >
                 Seller Workspace
               </h1>
-            </div>
+            </Link>
           </div>
 
           {/* Right: actions */}

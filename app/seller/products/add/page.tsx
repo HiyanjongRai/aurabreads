@@ -224,7 +224,7 @@ export default function AddNewProductPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
                 
                 {/* Row 1: Product Name & SKU */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={labelStyle}>
                       Product Name <span style={{ color: '#ef4444' }}>*</span>
@@ -257,7 +257,7 @@ export default function AddNewProductPage() {
                 </div>
 
                 {/* Row 2: Category & Collection */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={labelStyle}>
                       Category <span style={{ color: '#ef4444' }}>*</span>
@@ -293,7 +293,7 @@ export default function AddNewProductPage() {
                 </div>
 
                 {/* Row 3: Price & Compare at Price */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={labelStyle}>
                       Price <span style={{ color: '#ef4444' }}>*</span>
@@ -380,7 +380,7 @@ export default function AddNewProductPage() {
               <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', margin: '0 0 20px' }}>Product Details</h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={labelStyle}>Material</label>
                     <select name="material" style={{ ...inputContainerStyle, cursor: 'pointer' }}>
@@ -405,7 +405,7 @@ export default function AddNewProductPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="responsive-two-column" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={labelStyle}>Finish</label>
                     <select name="finish" style={{ ...inputContainerStyle, cursor: 'pointer' }}>
@@ -499,7 +499,7 @@ export default function AddNewProductPage() {
               </div>
 
               {/* 8 Image Slots Grid (Screenshot 1 Layout) */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+              <div className="responsive-image-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {Array.from({ length: 8 }).map((_, idx) => {
                   const previewSrc = previews[idx];
                   return (
@@ -591,7 +591,7 @@ export default function AddNewProductPage() {
                   </select>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid #f1f5f9' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid #f1f5f9' }} className="responsive-row-stack">
                   <div>
                     <label style={{ ...labelStyle, margin: 0 }}>Featured Product</label>
                     <p style={subTextStyle}>Show this product on homepage</p>
@@ -658,7 +658,7 @@ export default function AddNewProductPage() {
         </div>
 
         {/* ── Fixed Bottom Action Bar (Screenshot 1) ────────────────────── */}
-        <div style={{
+        <div className="responsive-action-bar" style={{
           background: '#ffffff',
           borderTop: '1px solid #e2e8f0',
           padding: '16px 32px',

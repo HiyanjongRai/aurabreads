@@ -178,6 +178,13 @@ export function AdminShell({ children, user }: AdminShellProps) {
             >
               <Menu size={20} />
             </button>
+            <Link
+              href="/admin"
+              style={{ display: "flex", flexDirection: "column", textDecoration: "none", color: "inherit", gap: 2 }}
+            >
+              <p style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", margin: 0 }}>AuraBeads</p>
+              <strong style={{ fontSize: 13, color: "#fff", lineHeight: 1 }}>Admin Workspace</strong>
+            </Link>
             <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: "8px 14px", width: 240 }}>
               <Search size={14} color="rgba(255,255,255,0.3)" />
               <input

@@ -99,6 +99,47 @@ a {
   color: inherit;
 }
 
+.responsive-two-column {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .responsive-two-column {
+    grid-template-columns: 1fr !important;
+  }
+
+  .responsive-row-stack {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px;
+  }
+
+  .responsive-row-stack input[type="checkbox"] {
+    margin-left: 0 !important;
+  }
+
+  .responsive-action-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px;
+    padding: 18px 18px !important;
+  }
+
+  .responsive-action-bar > div {
+    width: 100%;
+  }
+
+  .responsive-action-bar a,
+  .responsive-action-bar button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .responsive-image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 /* ─────────────────────────────────────────
    TOP ANNOUNCEMENT BAR
 ───────────────────────────────────────── */
