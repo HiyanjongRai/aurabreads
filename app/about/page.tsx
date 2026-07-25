@@ -72,21 +72,6 @@ export default function AboutPage() {
           <div className="ab-about-hero-rule" />
         </section>
 
-        {/* ── Stats ── */}
-        <section className="ab-about-stats-section">
-          <div className="ab-about-container">
-            <div className="ab-about-stats-grid">
-              {stats.map(({ value, label, icon: Icon }) => (
-                <div key={label} className="ab-about-stat">
-                  <span className="ab-about-stat-icon"><Icon size={18} strokeWidth={1.75} /></span>
-                  <strong className="ab-about-stat-val">{value}</strong>
-                  <span className="ab-about-stat-label">{label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* ── Story ── */}
         <section className="ab-about-story">
           <div className="ab-about-container">

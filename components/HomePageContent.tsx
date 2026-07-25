@@ -123,7 +123,7 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
                 </p>
               )}
             </div>
-            <Link href="#" className="ab-btn-outline-sm">View All</Link>
+            <Link href="/products" className="ab-btn-outline-sm">View All</Link>
           </div>
 
           <div className="ab-products-grid">
