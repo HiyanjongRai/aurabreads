@@ -23,6 +23,9 @@ import {
   X,
   AlertCircle,
   RefreshCw,
+  Eye,
+  Star,
+  Tag,
 } from 'lucide-react';
 
 const cardStyle: React.CSSProperties = {
@@ -87,7 +90,13 @@ function compressImage(file: File, maxWidth = 1200, quality = 0.82): Promise<str
 
 export default function AddNewProductPage() {
   const [state, formAction, isPending] = useActionState(createProductAction, initialState);
+  const [name, setName] = useState('');
+  const [sku, setSku] = useState('');
+  const [category, setCategory] = useState('necklaces');
   const [shortDesc, setShortDesc] = useState('');
+  const [price, setPrice] = useState<string>('');
+  const [salePrice, setSalePrice] = useState<string>('');
+  const [stock, setStock] = useState<string>('10');
   const [featured, setFeatured] = useState(false);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
@@ -98,6 +107,13 @@ export default function AddNewProductPage() {
   const MAX_COUNT = 6;
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+  const numPrice = parseFloat(price) || 0;
+  const numSalePrice = parseFloat(salePrice) || 0;
+  const discountPercent =
+    numPrice > 0 && numSalePrice > 0 && numSalePrice < numPrice
+      ? Math.round(((numPrice - numSalePrice) / numPrice) * 100)
+      : 0;
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setValidationError(null);
     const files = e.target.files;
@@ -106,21 +122,21 @@ export default function AddNewProductPage() {
     const fileList = Array.from(files);
 
     if (previews.length + fileList.length > MAX_COUNT) {
-      setValidationError(`Maximum ${MAX_COUNT} images allowed per product. You have already added ${previews.length}.`);
+      setValidationError(`Maximum ${MAX_COUNT} images allowed per product. You have added ${previews.length}.`);
       if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
     for (const file of fileList) {
       if (!ALLOWED_TYPES.includes(file.type)) {
-        setValidationError(`"${file.name}" is not a supported image format. Please select JPG, PNG, or WEBP.`);
+        setValidationError(`"${file.name}" is not a supported format. Please select JPG, PNG, or WEBP.`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       if (file.size > MAX_FILE_SIZE) {
         const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-        setValidationError(`"${file.name}" is ${sizeMb}MB. Maximum image size allowed is 5MB.`);
+        setValidationError(`"${file.name}" is ${sizeMb}MB. Maximum allowed image size is 5MB.`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -151,7 +167,7 @@ export default function AddNewProductPage() {
   };
 
   return (
-    <div style={{ padding: '32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, color: '#ffffff' }}>
+    <div style={{ padding: '32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
       
       {/* Toast Notification for Success */}
       {state?.success && (
@@ -188,7 +204,7 @@ export default function AddNewProductPage() {
         </div>
       )}
 
-      {/* Header & Breadcrumb */}
+      {/* Form Action */}
       <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
           <div>
@@ -249,7 +265,7 @@ export default function AddNewProductPage() {
               {isPending ? (
                 <>
                   <RefreshCw size={16} className="animate-spin" />
-                  <span>Uploading to Cloudinary & Saving...</span>
+                  <span>Uploading & Publishing...</span>
                 </>
               ) : (
                 <>
@@ -261,9 +277,10 @@ export default function AddNewProductPage() {
           </div>
         </div>
 
+        {/* ── Main Form Grid ────────────────────────────────────────────── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
           
-          {/* ── Left Column (Main Information) ─────────────────────────────── */}
+          {/* ── Left Column (Form Inputs) ─────────────────────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, gridColumn: 'span 2' }}>
             
             {/* Card 1: Product Information */}
@@ -281,7 +298,8 @@ export default function AddNewProductPage() {
                   <input
                     type="text"
                     name="name"
-                    defaultValue={state?.fields?.name ?? ''}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="e.g. Royal Kundan Gold Choker Necklace Set"
                     required
                     style={inputContainerStyle}
@@ -297,7 +315,8 @@ export default function AddNewProductPage() {
                     <input
                       type="text"
                       name="sku"
-                      defaultValue={state?.fields?.sku ?? ''}
+                      value={sku}
+                      onChange={(e) => setSku(e.target.value)}
                       placeholder="e.g. NCK-001"
                       style={{ ...inputContainerStyle, fontFamily: 'monospace' }}
                     />
@@ -306,7 +325,8 @@ export default function AddNewProductPage() {
                     <label style={labelStyle}>Category <span style={{ color: '#f87171' }}>*</span></label>
                     <select
                       name="category"
-                      defaultValue={state?.fields?.category ?? 'necklaces'}
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
                       required
                       style={{ ...inputContainerStyle, cursor: 'pointer', background: '#1c1c2b' }}
                     >
@@ -331,12 +351,12 @@ export default function AddNewProductPage() {
                     name="shortDescription"
                     value={shortDesc}
                     onChange={(e) => setShortDesc(e.target.value)}
-                    placeholder="Brief 1-2 sentence summary for search and cards…"
+                    placeholder="Brief 1-2 sentence summary for search cards and listings…"
                     style={{ ...inputContainerStyle, resize: 'vertical' }}
                   />
                 </div>
 
-                {/* Rich Text Editor */}
+                {/* Rich Text Description */}
                 <div>
                   <label style={labelStyle}>Full Description & Care Instructions</label>
                   <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
@@ -348,10 +368,10 @@ export default function AddNewProductPage() {
                       ))}
                     </div>
                     <textarea
-                      rows={5}
+                      rows={4}
                       name="fullDescription"
                       defaultValue={state?.fields?.fullDescription ?? ''}
-                      placeholder="Provide full description, specifications, dimensions, and care instructions…"
+                      placeholder="Provide detailed description, specifications, weight, dimensions, and care guidelines…"
                       style={{ ...inputContainerStyle, border: 'none', background: 'transparent', borderRadius: 0, resize: 'vertical' }}
                     />
                   </div>
@@ -361,9 +381,16 @@ export default function AddNewProductPage() {
 
             {/* Card 2: Pricing & Inventory */}
             <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
-                <DollarSign size={18} color="#d4af37" />
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Pricing & Inventory</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <DollarSign size={18} color="#d4af37" />
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Pricing & Inventory</h2>
+                </div>
+                {discountPercent > 0 && (
+                  <span style={{ fontSize: 11, fontWeight: 800, color: '#4ade80', background: 'rgba(34,197,94,0.14)', padding: '3px 10px', borderRadius: 99 }}>
+                    Save {discountPercent}% OFF
+                  </span>
+                )}
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
@@ -373,7 +400,8 @@ export default function AddNewProductPage() {
                     type="number"
                     step="0.01"
                     name="price"
-                    defaultValue={state?.fields?.price ?? ''}
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
                     placeholder="e.g. 3500"
                     required
                     style={inputContainerStyle}
@@ -388,6 +416,8 @@ export default function AddNewProductPage() {
                     type="number"
                     step="0.01"
                     name="salePrice"
+                    value={salePrice}
+                    onChange={(e) => setSalePrice(e.target.value)}
                     placeholder="e.g. 2800"
                     style={inputContainerStyle}
                   />
@@ -400,7 +430,8 @@ export default function AddNewProductPage() {
                   <input
                     type="number"
                     name="stock"
-                    defaultValue={state?.fields?.stock ?? '10'}
+                    value={stock}
+                    onChange={(e) => setStock(e.target.value)}
                     placeholder="e.g. 25"
                     required
                     style={inputContainerStyle}
@@ -414,9 +445,14 @@ export default function AddNewProductPage() {
 
             {/* Card 3: Images & Cloudinary Upload */}
             <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
-                <ImageIcon size={18} color="#d4af37" />
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Product Images (Cloudinary CDN)</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <ImageIcon size={18} color="#d4af37" />
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Product Images</h2>
+                </div>
+                <span style={{ fontSize: 11, fontWeight: 700, color: previews.length >= MAX_COUNT ? '#f87171' : 'rgba(255,255,255,0.4)' }}>
+                  {previews.length}/{MAX_COUNT} Uploaded
+                </span>
               </div>
 
               {/* Hidden File Input */}
@@ -424,7 +460,7 @@ export default function AddNewProductPage() {
                 type="file"
                 name="images"
                 multiple
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 style={{ display: 'none' }}
@@ -437,50 +473,58 @@ export default function AddNewProductPage() {
 
               {/* Dropzone */}
               <div
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  if (previews.length < MAX_COUNT) fileInputRef.current?.click();
+                }}
                 style={{
-                  border: '2px dashed rgba(212,175,55,0.3)',
+                  border: `2px dashed ${previews.length >= MAX_COUNT ? 'rgba(239,68,68,0.3)' : 'rgba(212,175,55,0.35)'}`,
                   borderRadius: 16,
-                  padding: '36px 20px',
+                  padding: '32px 20px',
                   textAlign: 'center',
                   background: 'rgba(212,175,55,0.03)',
-                  cursor: 'pointer',
+                  cursor: previews.length >= MAX_COUNT ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: 10,
+                  transition: 'all 0.2s',
                 }}
               >
-                <div style={{ width: 48, height: 48, borderRadius: 14, background: 'rgba(212,175,55,0.12)', color: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <UploadCloud size={24} />
+                <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(212,175,55,0.12)', color: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {isProcessingImages ? <RefreshCw size={20} className="animate-spin" /> : <UploadCloud size={22} />}
                 </div>
                 <div>
                   <p style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                    Click to select images to upload to Cloudinary
+                    {previews.length >= MAX_COUNT ? 'Maximum 6 images reached' : 'Click or drop files to upload product images'}
                   </p>
                   <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                    PNG, JPG, WEBP up to 5MB (Cloud Key: 979236259656447)
+                    Supported: JPG, PNG, WEBP · Max 5MB per image · Max 15MB total
                   </p>
                 </div>
               </div>
 
               {/* Image Preview Grid */}
               {previews.length > 0 && (
-                <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 12 }}>
+                <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 12 }}>
                   {previews.map((src, index) => (
-                    <div key={index} style={{ position: 'relative', width: 100, height: 100, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(212,175,55,0.4)' }}>
-                      <img src={src} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div key={index} style={{ position: 'relative', width: 90, height: 90, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(212,175,55,0.4)', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
+                      <img src={src} alt={`Preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
                         style={{
                           position: 'absolute', top: 4, right: 4, width: 22, height: 22,
-                          borderRadius: 99, background: 'rgba(0,0,0,0.8)', color: '#fff',
+                          borderRadius: 99, background: 'rgba(0,0,0,0.85)', color: '#fff',
                           border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
                         }}
                       >
                         <X size={12} />
                       </button>
+                      {index === 0 && (
+                        <span style={{ position: 'absolute', bottom: 2, left: 2, right: 2, background: 'rgba(212,175,55,0.9)', color: '#000', fontSize: 9, fontWeight: 800, textAlign: 'center', borderRadius: 4, padding: '1px 0' }}>
+                          COVER
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -489,71 +533,78 @@ export default function AddNewProductPage() {
 
           </div>
 
-          {/* ── Right Column (Sidebar Settings) ───────────────────────────── */}
+          {/* ── Right Column: Live Storefront Card Preview ──────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            
-            {/* Status Card */}
             <div style={cardStyle}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Publish Status
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <label style={labelStyle}>Visibility Status</label>
-                  <select name="statusSelect" style={{ ...inputContainerStyle, background: '#1c1c2b', cursor: 'pointer' }}>
-                    <option value="active">Active (Published)</option>
-                    <option value="draft">Draft (Hidden)</option>
-                    <option value="archived">Archived</option>
-                  </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <Eye size={16} color="#d4af37" />
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', margin: 0 }}>Live Storefront Preview</h3>
+              </div>
+
+              {/* Product Card Replica */}
+              <div style={{
+                background: '#ffffff',
+                borderRadius: 16,
+                overflow: 'hidden',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
+                color: '#1a1a1a',
+              }}>
+                <div style={{ position: 'relative', height: 200, background: '#fbf9f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {previews[0] ? (
+                    <img src={previews[0]} alt="Card Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ textAlign: 'center', color: '#9ca3af' }}>
+                      <ImageIcon size={32} style={{ margin: '0 auto 6px' }} />
+                      <span style={{ fontSize: 11 }}>Upload image to preview</span>
+                    </div>
+                  )}
+
+                  {discountPercent > 0 && (
+                    <span style={{ position: 'absolute', top: 10, left: 10, background: '#d97706', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>
+                      -{discountPercent}% OFF
+                    </span>
+                  )}
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Featured Item</span>
-                  <input
-                    type="checkbox"
-                    name="featured"
-                    checked={featured}
-                    onChange={(e) => setFeatured(e.target.checked)}
-                    style={{ width: 18, height: 18, accentColor: '#d4af37', cursor: 'pointer' }}
-                  />
+                <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c9a84c' }}>
+                    {category}
+                  </span>
+                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {name || 'Your Product Title'}
+                  </h4>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                    {numSalePrice > 0 && numSalePrice < numPrice ? (
+                      <>
+                        <span style={{ fontSize: 15, fontWeight: 800, color: '#d97706' }}>
+                          NPR {numSalePrice.toLocaleString()}
+                        </span>
+                        <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>
+                          NPR {numPrice.toLocaleString()}
+                        </span>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: 15, fontWeight: 800, color: '#111827' }}>
+                        NPR {numPrice > 0 ? numPrice.toLocaleString() : '0.00'}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#f59e0b', fontSize: 12, marginTop: 4 }}>
+                    <Star size={12} fill="#f59e0b" />
+                    <span style={{ fontWeight: 700, color: '#374151', fontSize: 11 }}>4.9 (New)</span>
+                  </div>
                 </div>
               </div>
+
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 14, textAlign: 'center', margin: '14px 0 0' }}>
+                This is how your item card will display to shoppers on the homepage.
+              </p>
             </div>
-
-            {/* Specifications Card */}
-            <div style={cardStyle}>
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#ffffff', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                Jewelry Specifications
-              </h3>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <label style={labelStyle}>Material</label>
-                  <select name="material" style={{ ...inputContainerStyle, background: '#1c1c2b' }}>
-                    <option value="Gold Plated">Gold Plated</option>
-                    <option value="Solid Gold">Solid Gold</option>
-                    <option value="Sterling Silver">Sterling Silver</option>
-                    <option value="Brass / Alloy">Brass / Alloy</option>
-                    <option value="Beaded">Beaded / Crystal</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Color / Finish</label>
-                  <input type="text" name="color" placeholder="e.g. Yellow Gold / Antique" style={inputContainerStyle} />
-                </div>
-
-                <div>
-                  <label style={labelStyle}>Style / Collection</label>
-                  <input type="text" name="style" placeholder="e.g. Traditional Bridal" style={inputContainerStyle} />
-                </div>
-              </div>
-            </div>
-
           </div>
 
         </div>
-
       </form>
     </div>
   );
