@@ -1,21 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { CartDrawer } from "@/components/CartDrawer";
 
 type AuthTab = "login" | "register";
 
-export default function Navbar() {
+function NavbarContent() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const [authTab, setAuthTab] = useState<AuthTab>("login");
   const [cartOpen, setCartOpen] = useState(false);
 
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Check if URL has ?auth=login or ?auth=register
+  useEffect(() => {
+    const authParam = searchParams.get("auth");
+    if (authParam === "login" || authParam === "register") {
+      setAuthTab(authParam);
+      setAuthOpen(true);
+    }
+  }, [searchParams]);
+
   function openAuth(tab: AuthTab = "login") {
     setAuthTab(tab);
     setAuthOpen(true);
+  }
+
+  function handleCloseAuth() {
+    setAuthOpen(false);
+    // Clean up query param if present
+    if (searchParams.get("auth")) {
+      router.replace("/", { scroll: false });
+    }
   }
 
   return (
@@ -134,7 +155,7 @@ export default function Navbar() {
       {/* Auth Modal */}
       <AuthModal
         isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
+        onClose={handleCloseAuth}
         defaultTab={authTab}
       />
 
@@ -144,5 +165,13 @@ export default function Navbar() {
         onClose={() => setCartOpen(false)}
       />
     </>
+  );
+}
+
+export default function Navbar() {
+  return (
+    <Suspense fallback={null}>
+      <NavbarContent />
+    </Suspense>
   );
 }
