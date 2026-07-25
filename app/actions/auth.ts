@@ -95,6 +95,7 @@ export async function register(
   }
 
   redirect("/login?registered=1");
+  return { success: "Account created! Please log in." };
 }
 
 export async function login(
@@ -146,6 +147,7 @@ export async function login(
   await createSession(user);
   await logAuthEvent({ action: "LOGIN_SUCCESS", email, ip, success: true, userId: user.id });
   redirectForRole(user.role);
+  return { success: "Login successful." };
 }
 
 export async function logout() {
