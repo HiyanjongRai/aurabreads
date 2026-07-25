@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowLeft, CheckCircle2, ShieldCheck, Lock, CreditCard, Truck, AlertCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Lock, AlertCircle } from 'lucide-react';
 
 type FormErrors = {
   email?: string;
@@ -17,11 +17,25 @@ type FormErrors = {
   termsAccepted?: string;
 };
 
+type FormData = {
+  email: string;
+  phone: string;
+  firstName: string;
+  lastName: string;
+  street: string;
+  city: string;
+  state: string;
+  postal: string;
+  promoCode: string;
+  orderNotes: string;
+  termsAccepted: boolean;
+};
+
 export default function CheckoutPage() {
   const [completed, setCompleted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     email: '',
     phone: '',
     firstName: '',
@@ -38,19 +52,18 @@ export default function CheckoutPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = type === 'checkbox' ? (e.target as HTMLInputElement).checked : false;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    // Clear error for this field when user starts typing
     if (errors[name as keyof FormErrors]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
-    
+
     if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Valid email is required';
     }
@@ -137,7 +150,7 @@ export default function CheckoutPage() {
             <span>256-Bit Encrypted Secure Checkout</span>
           </div>
         </div>
-        
+
         {/* Progress Indicator */}
         <div className="bg-gray-50 px-4 py-3 sm:px-6">
           <div className="mx-auto max-w-6xl flex items-center justify-between text-xs">
@@ -169,7 +182,7 @@ export default function CheckoutPage() {
 
         <div className="grid gap-8 lg:grid-cols-12">
           {/* Left: Form */}
-          <div className="lg:col-span-7 space-y-6">
+          <div className="lg:col-span-7">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Contact Information */}
               <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100 space-y-4">
@@ -188,12 +201,15 @@ export default function CheckoutPage() {
                       required
                       placeholder="you@example.com"
                       className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                        errors.email
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                       }`}
                     />
-                    {errors.email && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={12} />{errors.email}</p>}
+                    {errors.email && (
+                      <p className="text-xs text-red-600 flex items-center gap-1">
+                        <AlertCircle size={12} />
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-gray-700">Phone Number</label>
@@ -205,12 +221,15 @@ export default function CheckoutPage() {
                       required
                       placeholder="+977 9800000000"
                       className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                        errors.phone
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        errors.phone ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                       }`}
                     />
-                    {errors.phone && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={12} />{errors.phone}</p>}
+                    {errors.phone && (
+                      <p className="text-xs text-red-600 flex items-center gap-1">
+                        <AlertCircle size={12} />
+                        {errors.phone}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -233,9 +252,7 @@ export default function CheckoutPage() {
                         required
                         placeholder="Jane"
                         className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                          errors.firstName
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                          errors.firstName ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                         }`}
                       />
                       {errors.firstName && <p className="text-xs text-red-600">{errors.firstName}</p>}
@@ -250,9 +267,7 @@ export default function CheckoutPage() {
                         required
                         placeholder="Smith"
                         className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                          errors.lastName
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                          errors.lastName ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                         }`}
                       />
                       {errors.lastName && <p className="text-xs text-red-600">{errors.lastName}</p>}
@@ -266,11 +281,9 @@ export default function CheckoutPage() {
                       value={formData.street}
                       onChange={handleInputChange}
                       required
-                      placeholder="123 Luxury Avenue, Suite 400"
+                      placeholder="123 Luxury Avenue"
                       className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                        errors.street
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                          : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                        errors.street ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                       }`}
                     />
                     {errors.street && <p className="text-xs text-red-600">{errors.street}</p>}
@@ -286,9 +299,7 @@ export default function CheckoutPage() {
                         required
                         placeholder="Kathmandu"
                         className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                          errors.city
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                          errors.city ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                         }`}
                       />
                       {errors.city && <p className="text-xs text-red-600">{errors.city}</p>}
@@ -303,9 +314,7 @@ export default function CheckoutPage() {
                         required
                         placeholder="Bagmati"
                         className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                          errors.state
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                          errors.state ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                         }`}
                       />
                       {errors.state && <p className="text-xs text-red-600">{errors.state}</p>}
@@ -320,9 +329,7 @@ export default function CheckoutPage() {
                         required
                         placeholder="44600"
                         className={`h-11 w-full rounded-xl border px-3.5 text-sm outline-none focus:ring-2 transition ${
-                          errors.postal
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-                            : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
+                          errors.postal ? 'border-red-500 focus:border-red-500 focus:ring-red-200' : 'border-gray-200 focus:border-gold-500 focus:ring-gold-200'
                         }`}
                       />
                       {errors.postal && <p className="text-xs text-red-600">{errors.postal}</p>}
@@ -368,10 +375,7 @@ export default function CheckoutPage() {
                       placeholder="Enter promo code"
                       className="flex-1 h-11 rounded-xl border border-gray-200 px-3.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200"
                     />
-                    <button
-                      type="button"
-                      className="px-6 h-11 bg-gold-600 text-white text-sm font-semibold rounded-xl hover:bg-gold-700 transition"
-                    >
+                    <button type="button" className="px-6 h-11 bg-gold-600 text-white text-sm font-semibold rounded-xl hover:bg-gold-700 transition">
                       Apply
                     </button>
                   </div>
@@ -383,7 +387,7 @@ export default function CheckoutPage() {
                     name="orderNotes"
                     value={formData.orderNotes}
                     onChange={handleInputChange}
-                    placeholder="Any special requests or instructions for your order?"
+                    placeholder="Any special requests for your order?"
                     className="w-full h-20 rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm outline-none focus:border-gold-500 focus:ring-2 focus:ring-gold-200 resize-none"
                   />
                 </div>
@@ -397,21 +401,22 @@ export default function CheckoutPage() {
                     name="termsAccepted"
                     checked={formData.termsAccepted}
                     onChange={handleInputChange}
-                    className={`mt-1 h-5 w-5 rounded border-2 accent-gold-600 cursor-pointer ${
-                      errors.termsAccepted ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    className={`mt-1 h-5 w-5 rounded border-2 accent-gold-600 cursor-pointer ${errors.termsAccepted ? 'border-red-500' : 'border-gray-300'}`}
                   />
                   <div>
-                    <span className="block text-sm font-medium text-gray-900">
-                      I agree to the Terms of Service and Privacy Policy
-                    </span>
-                    <span className="block text-xs text-gray-500 mt-1">
-                      By proceeding, you agree to our handmade jewelry care guidelines and our return policy (14-day returns).
-                    </span>
+                    <span className="block text-sm font-medium text-gray-900">I agree to the Terms of Service and Privacy Policy</span>
+                    <span className="block text-xs text-gray-500 mt-1">By proceeding, you agree to our handmade jewelry care guidelines and our return policy (14-day returns).</span>
                   </div>
                 </label>
-                {errors.termsAccepted && <p className="text-xs text-red-600 flex items-center gap-1"><AlertCircle size={12} />{errors.termsAccepted}</p>}
+                {errors.termsAccepted && (
+                  <p className="text-xs text-red-600 flex items-center gap-1">
+                    <AlertCircle size={12} />
+                    {errors.termsAccepted}
+                  </p>
+                )}
               </div>
+
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -437,7 +442,7 @@ export default function CheckoutPage() {
 
           {/* Right: Summary */}
           <div className="lg:col-span-5">
-            <div className="sticky top-24 rounded-2xl bg-white p-6 shadow-sm border border-gray-100 space-y-6">
+            <div className="sticky top-32 rounded-2xl bg-white p-6 shadow-sm border border-gray-100 space-y-6">
               <h2 className="font-serif text-lg font-medium text-gray-900 pb-2 border-b border-gray-100">Order Summary</h2>
 
               {/* Items */}
@@ -464,39 +469,32 @@ export default function CheckoutPage() {
                   <div className="flex flex-1 items-center justify-between">
                     <div>
                       <h3 className="text-sm font-medium text-gray-900">Chunky Hoop Earrings</h3>
-                      <span className="text-xs text-gray-500">24k Gold Plated</span>
+                      <span className="text-xs text-gray-500">Handcrafted Silver</span>
                     </div>
                     <span className="text-sm font-semibold text-gray-900">Rs 20.00</span>
                   </div>
                 </div>
               </div>
 
-              {/* Price Breakdown */}
-              <div className="space-y-2 pt-4 border-t border-gray-100 text-sm">
-                <div className="flex justify-between text-gray-600">
+              {/* Pricing */}
+              <div className="space-y-2 pt-4 border-t border-gray-200">
+                <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
                   <span>Rs 38.00</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-sm text-gray-600">
                   <span>Shipping</span>
-                  <span className="text-emerald-600 font-semibold">FREE</span>
+                  <span className="text-emerald-600 font-medium">FREE</span>
                 </div>
-                <div className="flex justify-between text-base font-semibold text-gray-900 pt-3 border-t border-gray-200">
+                <div className="flex justify-between text-base font-semibold text-gray-900 pt-2 border-t border-gray-100">
                   <span>Total</span>
-                  <span className="text-gold-600 text-lg">Rs 38.00</span>
+                  <span className="text-gold-600">Rs 38.00</span>
                 </div>
               </div>
 
-              {/* Guarantee items */}
-              <div className="space-y-3 pt-4 border-t border-gray-100 text-xs text-gray-500">
-                <div className="flex items-center gap-2">
-                  <Truck size={16} className="text-gold-600" />
-                  <span>Free Express Delivery (2-3 business days)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-gold-600" />
-                  <span>30-Day Money Back Guarantee</span>
-                </div>
+              {/* Security Badge */}
+              <div className="pt-4 border-t border-gray-100 text-center">
+                <p className="text-xs text-gray-500">🔒 256-bit Encrypted Checkout</p>
               </div>
             </div>
           </div>
