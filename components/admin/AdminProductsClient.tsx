@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { deleteProductAction } from '@/app/actions/product-delete';
 import {
   Search,
   PlusCircle,
@@ -601,9 +602,15 @@ export default function AdminProductsClient({ initialProducts, stats }: Props) {
                           </button>
 
                           <button
-                            onClick={() => {
-                              if (confirm(`Delete "${p.name}" from store catalog?`)) {
+                            onClick={async () => {
+                              const confirmed = window.confirm(`Delete "${p.name}" from store catalog?`);
+                              if (!confirmed) return;
+
+                              const result = await deleteProductAction(p.id);
+                              if (result.success) {
                                 setProducts((prev) => prev.filter((item) => item.id !== p.id));
+                              } else {
+                                alert(result.error || 'Unable to delete product.');
                               }
                             }}
                             style={{
