@@ -1,6 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/ToastProvider';
+import { bulkDeleteUsersAction } from '@/app/actions/admin';
 import {
   Search,
   Filter,
@@ -36,10 +39,15 @@ type Props = {
 };
 
 export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
+  const router = useRouter();
+  const toast = useToast();
   const [users, setUsers] = useState<AdminUserRow[]>(initialUsers);
   const [search, setSearch] = useState('');
   const [roleTab, setRoleTab] = useState<'ALL' | 'ADMIN' | 'SELLER' | 'CUSTOMER'>('ALL');
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const pageSize = 10;
 
   // Filtered list
@@ -66,6 +74,37 @@ export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
   const sellerCount = users.filter((u) => u.role === 'SELLER').length;
   const adminCount = users.filter((u) => u.role === 'ADMIN').length;
   const customerCount = users.filter((u) => u.role === 'CUSTOMER').length;
+  const visibleIds = paginatedUsers.map((u) => u.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
+
+  const toggleSelection = (id: string) => {
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id]));
+  };
+
+  const handleSelectAllVisible = () => {
+    if (allVisibleSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
+      return;
+    }
+
+    setSelectedIds((prev) => Array.from(new Set([...prev, ...visibleIds])));
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.length === 0) return;
+
+    startTransition(async () => {
+      const result = await bulkDeleteUsersAction(selectedIds);
+      setFeedback(result.message || (result.success ? 'Selected users removed.' : 'Could not delete the selected users.'));
+
+      if (result.success) {
+        setUsers((prev) => prev.filter((user) => !selectedIds.includes(user.id)));
+        setSelectedIds([]);
+        setPage(1);
+        router.refresh();
+      }
+    });
+  };
 
   return (
     <div style={{ padding: '32px', maxWidth: 1400, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, color: '#ffffff' }}>
@@ -86,7 +125,7 @@ export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
         </div>
 
         <button
-          onClick={() => alert('Invitation feature: Send sign-up link to user email.')}
+          onClick={() => toast.info('Invite User', 'A sign-up invite link would be sent to the user\'s email.')}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -105,6 +144,48 @@ export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
           <UserPlus size={16} />
           <span>Invite User</span>
         </button>
+      </div>
+
+      {/* ── Toast Demo Toolbar ─────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: 14,
+          padding: '12px 18px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginRight: 4 }}>
+          Notifications Preview
+        </span>
+        {[
+          { label: '✓ Success', fn: () => toast.success('Role Updated', 'User role has been changed to Seller.'), bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', color: '#34d399' },
+          { label: '✕ Error', fn: () => toast.error('Permission Denied', 'You do not have authority to perform this action.'), bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', color: '#f87171' },
+          { label: '⚠ Warning', fn: () => toast.warning('Confirm Required', 'Deleting a user will remove all their data permanently.'), bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', color: '#fbbf24' },
+          { label: 'ℹ Info', fn: () => toast.info('Invite Sent', 'Sign-up link sent to user@example.com.'), bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.3)', color: '#d4af37' },
+        ].map((item) => (
+          <button
+            key={item.label}
+            onClick={item.fn}
+            style={{
+              padding: '7px 16px',
+              borderRadius: 10,
+              border: `1px solid ${item.border}`,
+              background: item.bg,
+              color: item.color,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
 
       {/* Stats Cards */}
@@ -220,10 +301,62 @@ export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
 
       {/* Users Table Card */}
       <div style={{ background: '#161622', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', gap: 12, flexWrap: 'wrap' }}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, color: 'rgba(255,255,255,0.75)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={allVisibleSelected}
+              onChange={handleSelectAllVisible}
+              style={{ accentColor: '#d4af37', width: 15, height: 15 }}
+            />
+            {selectedIds.length > 0 ? `${selectedIds.length} selected` : 'Select all on this page'}
+          </label>
+
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              disabled={isPending}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                borderRadius: 10,
+                padding: '8px 12px',
+                fontSize: 12,
+                fontWeight: 700,
+                color: '#ffffff',
+                background: 'rgba(239,68,68,0.16)',
+                border: '1px solid rgba(239,68,68,0.35)',
+                cursor: isPending ? 'wait' : 'pointer',
+              }}
+            >
+              <Trash2 size={14} />
+              {isPending ? 'Deleting...' : 'Delete Selected'}
+            </button>
+          )}
+        </div>
+
+        {feedback && (
+          <div style={{ padding: '12px 20px 0', color: feedback.includes('Could not') ? '#f87171' : '#34d399', fontSize: 12, fontWeight: 600 }}>
+            {feedback}
+          </div>
+        )}
+
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}>
+                <th style={{ padding: '16px 20px', color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <input
+                      type="checkbox"
+                      checked={allVisibleSelected}
+                      onChange={handleSelectAllVisible}
+                      style={{ accentColor: '#d4af37', width: 15, height: 15 }}
+                    />
+                    Select
+                  </span>
+                </th>
                 <th style={{ padding: '16px 20px', color: 'rgba(255,255,255,0.4)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                   User Profile
                 </th>
@@ -247,7 +380,7 @@ export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
             <tbody>
               {paginatedUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} style={{ padding: '48px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
+                  <td colSpan={7} style={{ padding: '48px 20px', textAlign: 'center', color: 'rgba(255,255,255,0.4)' }}>
                     No users found matching your search.
                   </td>
                 </tr>
@@ -272,6 +405,15 @@ export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
 
                   return (
                     <tr key={u.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <td style={{ padding: '16px 20px' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(u.id)}
+                          onChange={() => toggleSelection(u.id)}
+                          style={{ accentColor: '#d4af37', width: 15, height: 15 }}
+                        />
+                      </td>
+
                       {/* Avatar & Name */}
                       <td style={{ padding: '16px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>

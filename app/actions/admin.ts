@@ -6,6 +6,7 @@ import { hashPassword } from '@/lib/password';
 import { createClient } from '@supabase/supabase-js';
 import { logAuthEvent } from '@/lib/audit-log';
 import { headers } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 
@@ -47,6 +48,47 @@ function getSupabaseAdmin() {
     },
     auth: { persistSession: false },
   });
+}
+
+export async function bulkDeleteUsersAction(userIds: string[]) {
+  const adminUser = await requireRole('ADMIN');
+  const ids = Array.from(new Set((userIds || []).filter(Boolean)));
+
+  if (ids.length === 0) {
+    return { success: false, message: 'No users were selected.' };
+  }
+
+  try {
+    const db = getDb();
+    const existingUsers = await db.user.findMany({
+      where: { id: { in: ids } },
+      select: { id: true },
+    });
+
+    const deletableIds = existingUsers.map((user) => user.id).filter((id) => id !== adminUser.id);
+    if (deletableIds.length === 0) {
+      return { success: false, message: 'No deletable users were selected.' };
+    }
+
+    await db.user.deleteMany({ where: { id: { in: deletableIds } } });
+
+    try {
+      const supabaseAdmin = getSupabaseAdmin();
+      for (const userId of deletableIds) {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+      }
+    } catch (supabaseErr) {
+      console.warn('[ADMIN BULK DELETE USERS SUPABASE WARN]', supabaseErr);
+    }
+
+    revalidatePath('/admin/users');
+    revalidatePath('/admin');
+
+    return { success: true, message: `Deleted ${deletableIds.length} user(s).` };
+  } catch (err) {
+    console.error('[ADMIN BULK DELETE USERS ERROR]', err);
+    return { success: false, message: 'Failed to delete selected users.' };
+  }
 }
 
 export async function createSellerAction(

@@ -3,6 +3,8 @@
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { deleteProductAction } from '@/app/actions/product-delete';
+import { useToast } from '@/components/ui/ToastProvider';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 import {
   Search,
   PlusCircle,
@@ -46,6 +48,7 @@ type Props = {
 };
 
 export default function AdminProductsClient({ initialProducts, stats }: Props) {
+  const toast = useToast();
   const [products, setProducts] = useState<AdminProductItem[]>(initialProducts);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'lowStock' | 'outOfStock' | 'draft'>('all');
@@ -57,6 +60,13 @@ export default function AdminProductsClient({ initialProducts, stats }: Props) {
 
   // Selected product for Quick View Modal
   const [previewProduct, setPreviewProduct] = useState<AdminProductItem | null>(null);
+
+  // Confirm Delete Modal state
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; product: AdminProductItem | null; loading: boolean }>({
+    open: false,
+    product: null,
+    loading: false,
+  });
 
   // Quick Stock Edit state
   const [editingStockId, setEditingStockId] = useState<string | null>(null);
@@ -207,6 +217,48 @@ export default function AdminProductsClient({ initialProducts, stats }: Props) {
             <span>Add Product</span>
           </Link>
         </div>
+      </div>
+
+      {/* ── Toast Demo Toolbar ─────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: 14,
+          padding: '12px 18px',
+          flexWrap: 'wrap',
+        }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginRight: 4 }}>
+          Notifications Preview
+        </span>
+        {[
+          { label: '✓ Success', fn: () => toast.success('Product Updated', 'Stock and pricing changes saved successfully.'), bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', color: '#34d399' },
+          { label: '✕ Error', fn: () => toast.error('Action Failed', 'Unable to connect. Check your network and try again.'), bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', color: '#f87171' },
+          { label: '⚠ Warning', fn: () => toast.warning('Low Stock Alert', '3 products are running below 5 units.'), bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', color: '#fbbf24' },
+          { label: 'ℹ Info', fn: () => toast.info('Tip', 'Use CSV Export to back up your product catalog.'), bg: 'rgba(212,175,55,0.12)', border: 'rgba(212,175,55,0.3)', color: '#d4af37' },
+        ].map((item) => (
+          <button
+            key={item.label}
+            onClick={item.fn}
+            style={{
+              padding: '7px 16px',
+              borderRadius: 10,
+              border: `1px solid ${item.border}`,
+              background: item.bg,
+              color: item.color,
+              fontSize: 12,
+              fontWeight: 700,
+              cursor: 'pointer',
+              letterSpacing: '0.02em',
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
 
       {/* ── Interactive Metric Cards ───────────────────────────────────────── */}
@@ -602,17 +654,7 @@ export default function AdminProductsClient({ initialProducts, stats }: Props) {
                           </button>
 
                           <button
-                            onClick={async () => {
-                              const confirmed = window.confirm(`Delete "${p.name}" from store catalog?`);
-                              if (!confirmed) return;
-
-                              const result = await deleteProductAction(p.id);
-                              if (result.success) {
-                                setProducts((prev) => prev.filter((item) => item.id !== p.id));
-                              } else {
-                                alert(result.error || 'Unable to delete product.');
-                              }
-                            }}
+                            onClick={() => setConfirmDelete({ open: true, product: p, loading: false })}
                             style={{
                               background: 'rgba(239,68,68,0.1)',
                               border: '1px solid rgba(239,68,68,0.2)',
@@ -799,6 +841,31 @@ export default function AdminProductsClient({ initialProducts, stats }: Props) {
           </div>
         </div>
       )}
+
+      {/* ─── Delete Confirmation Modal ─── */}
+      <ConfirmModal
+        isOpen={confirmDelete.open}
+        title="Delete Product?"
+        description={`This will permanently remove "${confirmDelete.product?.name}" from the store catalog. This action cannot be undone.`}
+        confirmText="Yes, Delete"
+        cancelText="Keep Product"
+        variant="danger"
+        isLoading={confirmDelete.loading}
+        onClose={() => setConfirmDelete({ open: false, product: null, loading: false })}
+        onConfirm={async () => {
+          if (!confirmDelete.product) return;
+          setConfirmDelete((prev) => ({ ...prev, loading: true }));
+          const result = await deleteProductAction(confirmDelete.product.id);
+          if (result.success) {
+            setProducts((prev) => prev.filter((item) => item.id !== confirmDelete.product!.id));
+            setConfirmDelete({ open: false, product: null, loading: false });
+            toast.success('Product Deleted', `"${confirmDelete.product.name}" has been removed from the catalog.`);
+          } else {
+            setConfirmDelete((prev) => ({ ...prev, loading: false }));
+            toast.error('Delete Failed', result.error || 'Unable to delete product. Please try again.');
+          }
+        }}
+      />
 
     </div>
   );

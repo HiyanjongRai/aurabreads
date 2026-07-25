@@ -126,23 +126,6 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
             <Link href="#" className="ab-btn-outline-sm">View All</Link>
           </div>
 
-          {!hasRealProducts && (
-            <div style={{
-              textAlign: 'center',
-              padding: '24px',
-              background: '#fff3cd',
-              borderRadius: '8px',
-              marginBottom: '24px',
-              fontSize: '0.9rem',
-              color: '#856404',
-              border: '1px solid #ffc107',
-            }}>
-              ⚠️ No products in database yet — showing demo items. Go to{' '}
-              <a href="/seller/products/add" style={{ color: '#856404', fontWeight: 600 }}>Seller → Add Product</a>{' '}
-              to add real products with Cloudinary images.
-            </div>
-          )}
-
           <div className="ab-products-grid">
             {displayProducts.map((product) => {
               const isWishlisted = !!wishlist[product.id];
