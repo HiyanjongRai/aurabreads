@@ -23,35 +23,41 @@ import {
   X,
   AlertCircle,
   RefreshCw,
-  Eye,
-  Star,
   Tag,
 } from 'lucide-react';
 
-const cardStyle: React.CSSProperties = {
-  background: '#161622',
-  border: '1px solid rgba(255,255,255,0.08)',
-  borderRadius: 20,
+const lightCardStyle: React.CSSProperties = {
+  background: '#ffffff',
+  border: '1px solid #e2e8f0',
+  borderRadius: 16,
   padding: '24px 28px',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
 };
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: 12,
-  fontWeight: 600,
-  color: 'rgba(255,255,255,0.6)',
-  marginBottom: 8,
+  fontSize: 13,
+  fontWeight: 700,
+  color: '#1e293b',
+  marginBottom: 6,
+};
+
+const subTextStyle: React.CSSProperties = {
+  fontSize: 11,
+  color: '#64748b',
+  marginTop: 4,
 };
 
 const inputContainerStyle: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.04)',
-  border: '1px solid rgba(255,255,255,0.1)',
-  borderRadius: 12,
-  padding: '11px 14px',
-  color: '#ffffff',
-  fontSize: 14,
+  background: '#ffffff',
+  border: '1px solid #cbd5e1',
+  borderRadius: 10,
+  padding: '10px 14px',
+  color: '#0f172a',
+  fontSize: 13,
   outline: 'none',
   width: '100%',
+  transition: 'border-color 0.2s',
 };
 
 const initialState: CreateProductState = {};
@@ -90,29 +96,19 @@ function compressImage(file: File, maxWidth = 1200, quality = 0.82): Promise<str
 
 export default function AddNewProductPage() {
   const [state, formAction, isPending] = useActionState(createProductAction, initialState);
-  const [name, setName] = useState('');
-  const [sku, setSku] = useState('');
-  const [category, setCategory] = useState('necklaces');
   const [shortDesc, setShortDesc] = useState('');
-  const [price, setPrice] = useState<string>('');
-  const [salePrice, setSalePrice] = useState<string>('');
-  const [stock, setStock] = useState<string>('10');
+  const [status, setStatus] = useState('active');
+  const [visibility, setVisibility] = useState('visible');
   const [featured, setFeatured] = useState(false);
+  const [trackInventory, setTrackInventory] = useState(true);
   const [previews, setPreviews] = useState<string[]>([]);
   const [isProcessingImages, setIsProcessingImages] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  const MAX_COUNT = 6;
+  const MAX_COUNT = 8; // Exactly 8 image slots matching Screenshot 1!
   const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-  const numPrice = parseFloat(price) || 0;
-  const numSalePrice = parseFloat(salePrice) || 0;
-  const discountPercent =
-    numPrice > 0 && numSalePrice > 0 && numSalePrice < numPrice
-      ? Math.round(((numPrice - numSalePrice) / numPrice) * 100)
-      : 0;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setValidationError(null);
@@ -129,14 +125,14 @@ export default function AddNewProductPage() {
 
     for (const file of fileList) {
       if (!ALLOWED_TYPES.includes(file.type)) {
-        setValidationError(`"${file.name}" is not a supported format. Please select JPG, PNG, or WEBP.`);
+        setValidationError(`"${file.name}" is not a supported image format. Please select JPG, PNG, or WEBP.`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
 
       if (file.size > MAX_FILE_SIZE) {
         const sizeMb = (file.size / (1024 * 1024)).toFixed(1);
-        setValidationError(`"${file.name}" is ${sizeMb}MB. Maximum allowed image size is 5MB.`);
+        setValidationError(`"${file.name}" is ${sizeMb}MB. Maximum image size allowed is 5MB.`);
         if (fileInputRef.current) fileInputRef.current.value = '';
         return;
       }
@@ -167,7 +163,7 @@ export default function AddNewProductPage() {
   };
 
   return (
-    <div style={{ padding: '32px', maxWidth: 1280, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, color: '#ffffff', fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ background: '#f8fafc', minHeight: '100vh', padding: '28px 32px 100px', color: '#0f172a', fontFamily: 'Inter, sans-serif' }}>
       
       {/* Toast Notification for Success */}
       {state?.success && (
@@ -177,7 +173,7 @@ export default function AddNewProductPage() {
           background: 'linear-gradient(135deg, #065f46 0%, #047857 100%)',
           border: '1px solid #10b981',
           borderRadius: 14, padding: '14px 20px', color: '#ffffff',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
         }}>
           <Check size={18} color="#34d399" />
           <span style={{ fontSize: 13, fontWeight: 700 }}>
@@ -189,11 +185,12 @@ export default function AddNewProductPage() {
       {/* Validation Error Banner (Client & Server) */}
       {(validationError || state?.error) && (
         <div style={{
+          marginBottom: 20,
           padding: '14px 18px',
           borderRadius: 14,
-          background: 'rgba(239,68,68,0.12)',
-          border: '1px solid rgba(239,68,68,0.3)',
-          color: '#f87171',
+          background: '#fef2f2',
+          border: '1px solid #fca5a5',
+          color: '#dc2626',
           fontSize: 13,
           display: 'flex',
           alignItems: 'center',
@@ -204,146 +201,142 @@ export default function AddNewProductPage() {
         </div>
       )}
 
-      {/* Form Action */}
-      <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-              <Link href="/seller" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-                <ArrowLeft size={16} />
-              </Link>
-              <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.15em', color: '#d4af37', textTransform: 'uppercase' }}>
-                SELLER CATALOG
-              </span>
-            </div>
-            <h1 style={{ fontSize: 26, fontWeight: 800, color: '#ffffff', letterSpacing: '-0.02em', margin: 0 }}>
-              Add New Product
-            </h1>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button
-              type="submit"
-              name="status"
-              value="draft"
-              disabled={isPending}
-              style={{
-                padding: '10px 20px',
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.1)',
-                background: 'rgba(255,255,255,0.04)',
-                color: 'rgba(255,255,255,0.7)',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Save Draft
-            </button>
-
-            <button
-              type="submit"
-              name="status"
-              value="active"
-              disabled={isPending}
-              style={{
-                padding: '10px 24px',
-                borderRadius: 12,
-                border: 'none',
-                background: 'linear-gradient(135deg, #d4af37, #a07c2e)',
-                color: '#000000',
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                boxShadow: '0 4px 14px rgba(212,175,55,0.3)',
-                opacity: isPending ? 0.7 : 1,
-              }}
-            >
-              {isPending ? (
-                <>
-                  <RefreshCw size={16} className="animate-spin" />
-                  <span>Uploading & Publishing...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={16} />
-                  <span>Publish Product</span>
-                </>
-              )}
-            </button>
-          </div>
+      <form action={formAction} style={{ display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1320, margin: '0 auto' }}>
+        
+        {/* Header Breadcrumb */}
+        <div>
+          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', margin: 0 }}>Add New Product</h1>
+          <p style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
+            Dashboard &gt; Products &gt; <strong style={{ color: '#0f172a' }}>Add New Product</strong>
+          </p>
         </div>
 
-        {/* ── Main Form Grid ────────────────────────────────────────────── */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 24 }}>
+        {/* ── Main Form Layout: 2 Columns (Screenshot 1) ────────────────────── */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 24, alignItems: 'start' }}>
           
-          {/* ── Left Column (Form Inputs) ─────────────────────────────────── */}
+          {/* ── Left Main Column (Product Info & Details) ──────────────────── */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24, gridColumn: 'span 2' }}>
             
             {/* Card 1: Product Information */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
-                <Package size={18} color="#d4af37" />
-                <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Product Details</h2>
-              </div>
+            <div style={lightCardStyle}>
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', margin: '0 0 20px' }}>Product Information</h2>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-                <div>
-                  <label style={labelStyle}>
-                    Product Name <span style={{ color: '#f87171' }}>*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g. Royal Kundan Gold Choker Necklace Set"
-                    required
-                    style={inputContainerStyle}
-                  />
-                  {state?.fieldErrors?.name && (
-                    <p style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{state.fieldErrors.name[0]}</p>
-                  )}
-                </div>
-
+                
+                {/* Row 1: Product Name & SKU */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <label style={labelStyle}>SKU / Item Code</label>
+                    <label style={labelStyle}>
+                      Product Name <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      defaultValue={state?.fields?.name ?? ''}
+                      placeholder="Enter product name"
+                      required
+                      style={inputContainerStyle}
+                    />
+                    {state?.fieldErrors?.name && (
+                      <p style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{state.fieldErrors.name[0]}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label style={labelStyle}>
+                      SKU <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
                     <input
                       type="text"
                       name="sku"
-                      value={sku}
-                      onChange={(e) => setSku(e.target.value)}
-                      placeholder="e.g. NCK-001"
-                      style={{ ...inputContainerStyle, fontFamily: 'monospace' }}
+                      defaultValue={state?.fields?.sku ?? ''}
+                      placeholder="Enter SKU"
+                      style={inputContainerStyle}
                     />
+                    <p style={subTextStyle}>Unique stock keeping unit</p>
                   </div>
+                </div>
+
+                {/* Row 2: Category & Collection */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <label style={labelStyle}>Category <span style={{ color: '#f87171' }}>*</span></label>
+                    <label style={labelStyle}>
+                      Category <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
                     <select
                       name="category"
-                      value={category}
-                      onChange={(e) => setCategory(e.target.value)}
+                      defaultValue={state?.fields?.category ?? 'necklaces'}
                       required
-                      style={{ ...inputContainerStyle, cursor: 'pointer', background: '#1c1c2b' }}
+                      style={{ ...inputContainerStyle, cursor: 'pointer' }}
                     >
-                      <option value="necklaces">Necklaces & Chokers</option>
-                      <option value="earrings">Earrings & Studs</option>
-                      <option value="bracelets">Bracelets & Bangles</option>
+                      <option value="">Select category</option>
+                      <option value="necklaces">Necklaces &amp; Chokers</option>
+                      <option value="earrings">Earrings &amp; Studs</option>
+                      <option value="bracelets">Bracelets &amp; Bangles</option>
                       <option value="rings">Rings</option>
                       <option value="anklets">Anklets</option>
                       <option value="sets">Full Sets</option>
                     </select>
                   </div>
+                  <div>
+                    <label style={labelStyle}>Collection</label>
+                    <select
+                      name="collection"
+                      defaultValue=""
+                      style={{ ...inputContainerStyle, cursor: 'pointer' }}
+                    >
+                      <option value="">Select collection</option>
+                      <option value="summer">Summer Edit</option>
+                      <option value="bridal">Bridal Collection</option>
+                      <option value="bestsellers">Bestsellers</option>
+                    </select>
+                  </div>
                 </div>
 
+                {/* Row 3: Price & Compare at Price */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={labelStyle}>
+                      Price <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: 13, fontWeight: 600 }}>NPR</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="price"
+                        defaultValue={state?.fields?.price ?? ''}
+                        placeholder="0.00"
+                        required
+                        style={{ ...inputContainerStyle, paddingLeft: 46 }}
+                      />
+                    </div>
+                    {state?.fieldErrors?.price && (
+                      <p style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{state.fieldErrors.price[0]}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Compare at Price</label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#64748b', fontSize: 13, fontWeight: 600 }}>NPR</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        name="salePrice"
+                        placeholder="0.00"
+                        style={{ ...inputContainerStyle, paddingLeft: 46 }}
+                      />
+                    </div>
+                    <p style={subTextStyle}>Original price (for discounts)</p>
+                  </div>
+                </div>
+
+                {/* Row 4: Short Description */}
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <label style={{ ...labelStyle, margin: 0 }}>Short Description</label>
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>{shortDesc.length}/160</span>
+                    <label style={{ ...labelStyle, margin: 0 }}>
+                      Short Description <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <span style={{ fontSize: 11, color: '#64748b' }}>{shortDesc.length}/160</span>
                   </div>
                   <textarea
                     rows={2}
@@ -351,109 +344,109 @@ export default function AddNewProductPage() {
                     name="shortDescription"
                     value={shortDesc}
                     onChange={(e) => setShortDesc(e.target.value)}
-                    placeholder="Brief 1-2 sentence summary for search cards and listings…"
+                    placeholder="Enter a short description about the product..."
                     style={{ ...inputContainerStyle, resize: 'vertical' }}
                   />
                 </div>
 
-                {/* Rich Text Description */}
+                {/* Row 5: Description with Formatting Toolbar */}
                 <div>
-                  <label style={labelStyle}>Full Description & Care Instructions</label>
-                  <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.02)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px', background: 'rgba(255,255,255,0.04)', borderBottom: '1px solid rgba(255,255,255,0.06)', flexWrap: 'wrap' }}>
-                      {[Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, LinkIcon].map((Icon, idx) => (
-                        <button key={idx} type="button" style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', padding: 6, borderRadius: 6, cursor: 'pointer', display: 'flex' }}>
+                  <label style={labelStyle}>
+                    Description <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <div style={{ border: '1px solid #cbd5e1', borderRadius: 10, overflow: 'hidden', background: '#ffffff' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '8px 12px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+                      {[Bold, Italic, Underline, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, LinkIcon, ImageIcon].map((Icon, idx) => (
+                        <button key={idx} type="button" style={{ background: 'none', border: 'none', color: '#475569', padding: 6, borderRadius: 6, cursor: 'pointer', display: 'flex' }}>
                           <Icon size={14} />
                         </button>
                       ))}
                     </div>
                     <textarea
-                      rows={4}
+                      rows={5}
                       name="fullDescription"
                       defaultValue={state?.fields?.fullDescription ?? ''}
-                      placeholder="Provide detailed description, specifications, weight, dimensions, and care guidelines…"
-                      style={{ ...inputContainerStyle, border: 'none', background: 'transparent', borderRadius: 0, resize: 'vertical' }}
+                      placeholder="Write a detailed description about the product..."
+                      style={{ ...inputContainerStyle, border: 'none', borderRadius: 0, resize: 'vertical' }}
                     />
                   </div>
                 </div>
+
               </div>
             </div>
 
-            {/* Card 2: Pricing & Inventory */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <DollarSign size={18} color="#d4af37" />
-                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Pricing & Inventory</h2>
-                </div>
-                {discountPercent > 0 && (
-                  <span style={{ fontSize: 11, fontWeight: 800, color: '#4ade80', background: 'rgba(34,197,94,0.14)', padding: '3px 10px', borderRadius: 99 }}>
-                    Save {discountPercent}% OFF
-                  </span>
-                )}
-              </div>
+            {/* Card 2: Product Details (Screenshot 1) */}
+            <div style={lightCardStyle}>
+              <h2 style={{ fontSize: 16, fontWeight: 800, color: '#0f172a', margin: '0 0 20px' }}>Product Details</h2>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16 }}>
-                <div>
-                  <label style={labelStyle}>Regular Price (NPR) <span style={{ color: '#f87171' }}>*</span></label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="price"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="e.g. 3500"
-                    required
-                    style={inputContainerStyle}
-                  />
-                  {state?.fieldErrors?.price && (
-                    <p style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{state.fieldErrors.price[0]}</p>
-                  )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={labelStyle}>Material</label>
+                    <select name="material" style={{ ...inputContainerStyle, cursor: 'pointer' }}>
+                      <option value="">Select material</option>
+                      <option value="18k_gold">18K Gold Plated Stainless Steel</option>
+                      <option value="silver">925 Sterling Silver</option>
+                      <option value="pearl">Freshwater Pearl</option>
+                      <option value="brass">Brass</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Color</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type="text"
+                        name="color"
+                        placeholder="Enter color (e.g. Gold, Silver)"
+                        style={{ ...inputContainerStyle, paddingRight: 36 }}
+                      />
+                      <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 16, height: 16, borderRadius: '50%', background: '#d4af37', border: '1px solid #cbd5e1' }} />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label style={labelStyle}>Sale Price (NPR)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="salePrice"
-                    value={salePrice}
-                    onChange={(e) => setSalePrice(e.target.value)}
-                    placeholder="e.g. 2800"
-                    style={inputContainerStyle}
-                  />
-                  {state?.fieldErrors?.salePrice && (
-                    <p style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{state.fieldErrors.salePrice[0]}</p>
-                  )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div>
+                    <label style={labelStyle}>Finish</label>
+                    <select name="finish" style={{ ...inputContainerStyle, cursor: 'pointer' }}>
+                      <option value="">Select finish</option>
+                      <option value="polished">High Polish Gold</option>
+                      <option value="matte">Matte Finish</option>
+                      <option value="hammered">Hammered Texture</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Style</label>
+                    <input
+                      type="text"
+                      name="style"
+                      placeholder="Enter style (e.g. Minimal, Boho)"
+                      style={inputContainerStyle}
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label style={labelStyle}>Stock Quantity <span style={{ color: '#f87171' }}>*</span></label>
+                  <label style={labelStyle}>Tags</label>
                   <input
-                    type="number"
-                    name="stock"
-                    value={stock}
-                    onChange={(e) => setStock(e.target.value)}
-                    placeholder="e.g. 25"
-                    required
+                    type="text"
+                    name="tags"
+                    placeholder="Enter tags and press Enter..."
                     style={inputContainerStyle}
                   />
-                  {state?.fieldErrors?.stock && (
-                    <p style={{ fontSize: 11, color: '#f87171', marginTop: 4 }}>{state.fieldErrors.stock[0]}</p>
-                  )}
+                  <p style={subTextStyle}>Add relevant tags to help customers find your product</p>
                 </div>
               </div>
             </div>
 
-            {/* Card 3: Images & Cloudinary Upload */}
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16, borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <ImageIcon size={18} color="#d4af37" />
-                  <h2 style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', margin: 0 }}>Product Images</h2>
-                </div>
-                <span style={{ fontSize: 11, fontWeight: 700, color: previews.length >= MAX_COUNT ? '#f87171' : 'rgba(255,255,255,0.4)' }}>
-                  {previews.length}/{MAX_COUNT} Uploaded
-                </span>
-              </div>
+          </div>
+
+          {/* ── Right Sidebar Column (Images, Status, Inventory) ───────────── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+            
+            {/* Right Card 1: Product Images (Screenshot 1) */}
+            <div style={lightCardStyle}>
+              <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', margin: '0 0 16px' }}>Product Images</h2>
 
               {/* Hidden File Input */}
               <input
@@ -471,140 +464,279 @@ export default function AddNewProductPage() {
                 <input key={idx} type="hidden" name="imageUrls" value={src} />
               ))}
 
-              {/* Dropzone */}
+              {/* Drag & Drop Upload Box */}
               <div
                 onClick={() => {
                   if (previews.length < MAX_COUNT) fileInputRef.current?.click();
                 }}
                 style={{
-                  border: `2px dashed ${previews.length >= MAX_COUNT ? 'rgba(239,68,68,0.3)' : 'rgba(212,175,55,0.35)'}`,
-                  borderRadius: 16,
-                  padding: '32px 20px',
+                  border: '2px dashed #cbd5e1',
+                  borderRadius: 12,
+                  padding: '28px 16px',
                   textAlign: 'center',
-                  background: 'rgba(212,175,55,0.03)',
+                  background: '#f8fafc',
                   cursor: previews.length >= MAX_COUNT ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 10,
+                  gap: 8,
+                  marginBottom: 16,
                   transition: 'all 0.2s',
                 }}
               >
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: 'rgba(212,175,55,0.12)', color: '#d4af37', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {isProcessingImages ? <RefreshCw size={20} className="animate-spin" /> : <UploadCloud size={22} />}
-                </div>
+                <UploadCloud size={32} color="#64748b" />
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', margin: 0 }}>
-                    {previews.length >= MAX_COUNT ? 'Maximum 6 images reached' : 'Click or drop files to upload product images'}
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', margin: 0 }}>
+                    Drag &amp; drop images here
                   </p>
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-                    Supported: JPG, PNG, WEBP · Max 5MB per image · Max 15MB total
+                  <p style={{ fontSize: 12, color: '#0284c7', fontWeight: 600, margin: '2px 0 0' }}>
+                    or click to browse
                   </p>
                 </div>
+                <p style={{ fontSize: 10, color: '#94a3b8', margin: '4px 0 0' }}>
+                  Upload up to 8 images (PNG, JPG, WEBP)<br />Recommended size: 1200 x 1200px
+                </p>
               </div>
 
-              {/* Image Preview Grid */}
-              {previews.length > 0 && (
-                <div style={{ marginTop: 20, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: 12 }}>
-                  {previews.map((src, index) => (
-                    <div key={index} style={{ position: 'relative', width: 90, height: 90, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(212,175,55,0.4)', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
-                      <img src={src} alt={`Preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        style={{
-                          position: 'absolute', top: 4, right: 4, width: 22, height: 22,
-                          borderRadius: 99, background: 'rgba(0,0,0,0.85)', color: '#fff',
-                          border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}
-                      >
-                        <X size={12} />
-                      </button>
-                      {index === 0 && (
-                        <span style={{ position: 'absolute', bottom: 2, left: 2, right: 2, background: 'rgba(212,175,55,0.9)', color: '#000', fontSize: 9, fontWeight: 800, textAlign: 'center', borderRadius: 4, padding: '1px 0' }}>
-                          COVER
-                        </span>
+              {/* 8 Image Slots Grid (Screenshot 1 Layout) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                {Array.from({ length: 8 }).map((_, idx) => {
+                  const previewSrc = previews[idx];
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        if (!previewSrc && previews.length < MAX_COUNT) fileInputRef.current?.click();
+                      }}
+                      style={{
+                        aspectRatio: '1',
+                        borderRadius: 10,
+                        border: '1px dashed #cbd5e1',
+                        background: previewSrc ? '#ffffff' : '#f8fafc',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        cursor: previewSrc ? 'default' : 'pointer',
+                      }}
+                    >
+                      {previewSrc ? (
+                        <>
+                          <img src={previewSrc} alt={`Slot ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeImage(idx);
+                            }}
+                            style={{
+                              position: 'absolute', top: 2, right: 2, width: 20, height: 20,
+                              borderRadius: '50%', background: 'rgba(0,0,0,0.75)', color: '#fff',
+                              border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
+                            }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </>
+                      ) : (
+                        <ImageIcon size={18} color="#cbd5e1" />
                       )}
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
 
-          </div>
+            {/* Right Card 2: Product Status (Screenshot 1) */}
+            <div style={lightCardStyle}>
+              <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', margin: '0 0 16px' }}>Product Status</h2>
 
-          {/* ── Right Column: Live Storefront Card Preview ──────────────── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <div style={cardStyle}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <Eye size={16} color="#d4af37" />
-                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#ffffff', margin: 0 }}>Live Storefront Preview</h3>
-              </div>
-
-              {/* Product Card Replica */}
-              <div style={{
-                background: '#ffffff',
-                borderRadius: 16,
-                overflow: 'hidden',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
-                color: '#1a1a1a',
-              }}>
-                <div style={{ position: 'relative', height: 200, background: '#fbf9f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {previews[0] ? (
-                    <img src={previews[0]} alt="Card Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ textAlign: 'center', color: '#9ca3af' }}>
-                      <ImageIcon size={32} style={{ margin: '0 auto 6px' }} />
-                      <span style={{ fontSize: 11 }}>Upload image to preview</span>
-                    </div>
-                  )}
-
-                  {discountPercent > 0 && (
-                    <span style={{ position: 'absolute', top: 10, left: 10, background: '#d97706', color: '#fff', fontSize: 10, fontWeight: 800, padding: '3px 8px', borderRadius: 99 }}>
-                      -{discountPercent}% OFF
-                    </span>
-                  )}
-                </div>
-
-                <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#c9a84c' }}>
-                    {category}
-                  </span>
-                  <h4 style={{ fontSize: 14, fontWeight: 700, color: '#111827', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {name || 'Your Product Title'}
-                  </h4>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                    {numSalePrice > 0 && numSalePrice < numPrice ? (
-                      <>
-                        <span style={{ fontSize: 15, fontWeight: 800, color: '#d97706' }}>
-                          NPR {numSalePrice.toLocaleString()}
-                        </span>
-                        <span style={{ fontSize: 12, color: '#9ca3af', textDecoration: 'line-through' }}>
-                          NPR {numPrice.toLocaleString()}
-                        </span>
-                      </>
-                    ) : (
-                      <span style={{ fontSize: 15, fontWeight: 800, color: '#111827' }}>
-                        NPR {numPrice > 0 ? numPrice.toLocaleString() : '0.00'}
-                      </span>
-                    )}
-                  </div>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#f59e0b', fontSize: 12, marginTop: 4 }}>
-                    <Star size={12} fill="#f59e0b" />
-                    <span style={{ fontWeight: 700, color: '#374151', fontSize: 11 }}>4.9 (New)</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div>
+                  <label style={labelStyle}>
+                    Status <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <select
+                      name="statusSelect"
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      style={{ ...inputContainerStyle, paddingLeft: 30, cursor: 'pointer' }}
+                    >
+                      <option value="active">Active</option>
+                      <option value="draft">Draft</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                    <div style={{
+                      position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+                      width: 8, height: 8, borderRadius: '50%',
+                      background: status === 'active' ? '#22c55e' : status === 'draft' ? '#f59e0b' : '#94a3b8',
+                    }} />
                   </div>
                 </div>
-              </div>
 
-              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 14, textAlign: 'center', margin: '14px 0 0' }}>
-                This is how your item card will display to shoppers on the homepage.
-              </p>
+                <div>
+                  <label style={labelStyle}>
+                    Visibility <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select
+                    name="visibility"
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value)}
+                    style={{ ...inputContainerStyle, cursor: 'pointer' }}
+                  >
+                    <option value="visible">Visible</option>
+                    <option value="hidden">Hidden</option>
+                  </select>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid #f1f5f9' }}>
+                  <div>
+                    <label style={{ ...labelStyle, margin: 0 }}>Featured Product</label>
+                    <p style={subTextStyle}>Show this product on homepage</p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    name="featured"
+                    checked={featured}
+                    onChange={(e) => setFeatured(e.target.checked)}
+                    style={{ width: 18, height: 18, accentColor: '#d4af37', cursor: 'pointer' }}
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Right Card 3: Inventory (Screenshot 1) */}
+            <div style={lightCardStyle}>
+              <h2 style={{ fontSize: 15, fontWeight: 800, color: '#0f172a', margin: '0 0 16px' }}>Inventory</h2>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 12, borderBottom: '1px solid #f1f5f9' }}>
+                  <label style={{ ...labelStyle, margin: 0 }}>Track Inventory</label>
+                  <input
+                    type="checkbox"
+                    checked={trackInventory}
+                    onChange={(e) => setTrackInventory(e.target.checked)}
+                    style={{ width: 18, height: 18, accentColor: '#d4af37', cursor: 'pointer' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>
+                    Quantity <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="stock"
+                    defaultValue="0"
+                    placeholder="0"
+                    required
+                    style={inputContainerStyle}
+                  />
+                  {state?.fieldErrors?.stock && (
+                    <p style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{state.fieldErrors.stock[0]}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Low Stock Alert</label>
+                  <input
+                    type="number"
+                    name="lowStockAlert"
+                    defaultValue="5"
+                    placeholder="5"
+                    style={inputContainerStyle}
+                  />
+                  <p style={subTextStyle}>You'll be notified when stock is below this level</p>
+                </div>
+              </div>
+            </div>
+
           </div>
 
         </div>
+
+        {/* ── Fixed Bottom Action Bar (Screenshot 1) ────────────────────── */}
+        <div style={{
+          background: '#ffffff',
+          borderTop: '1px solid #e2e8f0',
+          padding: '16px 32px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 32,
+          borderRadius: 16,
+          boxShadow: '0 -2px 10px rgba(0,0,0,0.03)',
+        }}>
+          <Link
+            href="/seller/products"
+            style={{
+              padding: '10px 20px',
+              borderRadius: 10,
+              border: '1px solid #cbd5e1',
+              background: '#ffffff',
+              color: '#334155',
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            Cancel
+          </Link>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button
+              type="submit"
+              name="status"
+              value="draft"
+              disabled={isPending}
+              style={{
+                padding: '10px 24px',
+                borderRadius: 10,
+                border: '1.5px solid #d4af37',
+                background: '#ffffff',
+                color: '#a07c2e',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
+            >
+              Save as Draft
+            </button>
+
+            <button
+              type="submit"
+              name="status"
+              value="active"
+              disabled={isPending}
+              style={{
+                padding: '10px 28px',
+                borderRadius: 10,
+                border: 'none',
+                background: 'linear-gradient(135deg, #d4af37 0%, #a07c2e 100%)',
+                color: '#ffffff',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                boxShadow: '0 4px 14px rgba(212,175,55,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              {isPending ? (
+                <>
+                  <RefreshCw size={16} className="animate-spin" />
+                  <span>Publishing...</span>
+                </>
+              ) : (
+                <span>Publish Product</span>
+              )}
+            </button>
+          </div>
+        </div>
+
       </form>
     </div>
   );

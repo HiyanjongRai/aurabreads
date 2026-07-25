@@ -132,17 +132,18 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
               return (
                 <div key={product.id} className="ab-product-card">
                   <div className="ab-product-img-wrap">
-                    {/* Always use plain <img> — handles Cloudinary URLs, base64, and local paths */}
-                    <img
-                      src={product.img}
-                      alt={product.name}
-                      loading="lazy"
-                      style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/product-earrings1.png';
-                      }}
-                    />
+                    <Link href={`/product/${product.id}`} style={{ width: '100%', height: '100%', display: 'block' }}>
+                      <img
+                        src={product.img}
+                        alt={product.name}
+                        loading="lazy"
+                        style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/product-earrings1.png';
+                        }}
+                      />
+                    </Link>
                     {product.isCloudinary && (
                       <span style={{
                         position: 'absolute',
@@ -169,7 +170,9 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
                     </button>
                   </div>
                   <div className="ab-product-info">
-                    <p className="ab-product-name">{product.name}</p>
+                    <Link href={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                      <p className="ab-product-name">{product.name}</p>
+                    </Link>
                     <div className="ab-product-price">
                       <span>Rs {product.price.toFixed(2)}</span>
                       {product.originalPrice && (
