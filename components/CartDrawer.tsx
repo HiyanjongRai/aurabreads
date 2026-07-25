@@ -9,12 +9,13 @@ import {
   Trash2,
   Tag,
   Truck,
-  ShieldCheck,
+  Shield,
   Sparkles,
   Plus,
   Minus,
-  Package,
-  Gift,
+  Gem,
+  CheckCircle2,
+  ChevronRight,
 } from 'lucide-react';
 
 export type CartItem = {
@@ -27,7 +28,7 @@ export type CartItem = {
 };
 
 const FREE_SHIPPING_THRESHOLD = 50;
-const SAMPLE_PROMO_CODE = 'WELCOME10';
+const PROMO_CODE = 'WELCOME10';
 const PROMO_DISCOUNT = 0.1;
 
 type CartDrawerProps = {
@@ -35,14 +36,13 @@ type CartDrawerProps = {
   onClose: () => void;
 };
 
-/* Fallback image component — shows elegant placeholder when img is broken */
-function ItemImage({ src, alt }: { src: string; alt: string }) {
-  const [error, setError] = useState(false);
+function ProductImage({ src, alt }: { src: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
 
-  if (!src || error) {
+  if (!src || failed) {
     return (
-      <div className="cd-img-fallback">
-        <Gift size={22} className="cd-img-fallback-icon" />
+      <div className="cd-img-placeholder">
+        <Gem size={20} strokeWidth={1.5} />
       </div>
     );
   }
@@ -52,275 +52,253 @@ function ItemImage({ src, alt }: { src: string; alt: string }) {
       src={src}
       alt={alt}
       className="cd-item-img"
-      onError={() => setError(true)}
+      onError={() => setFailed(true)}
     />
   );
 }
 
 export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [promoCode, setPromoCode] = useState('');
+  const [promoInput, setPromoInput] = useState('');
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
   const [promoError, setPromoError] = useState('');
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('aurabeads_cart');
-        setItems(stored ? JSON.parse(stored) : []);
-      } catch {
-        setItems([]);
-      }
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = localStorage.getItem('aurabeads_cart');
+      setItems(raw ? JSON.parse(raw) : []);
+    } catch {
+      setItems([]);
     }
   }, [isOpen]);
 
-  const updateCart = (newItems: CartItem[]) => {
-    setItems(newItems);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('aurabeads_cart', JSON.stringify(newItems));
-        window.dispatchEvent(new Event('aurabeads_cart_updated'));
-      } catch (e) {
-        console.error('Cart sync error:', e);
-      }
-    }
+  const persist = (next: CartItem[]) => {
+    setItems(next);
+    try {
+      localStorage.setItem('aurabeads_cart', JSON.stringify(next));
+      window.dispatchEvent(new Event('aurabeads_cart_updated'));
+    } catch { /* noop */ }
   };
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const discountAmount = appliedPromo ? subtotal * PROMO_DISCOUNT : 0;
-  const estimatedShipping = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 150;
-  const total = subtotal - discountAmount + estimatedShipping;
-  const progressToFreeShipping = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
-  const amountNeeded = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
-  const totalItemCount = items.reduce((sum, item) => sum + item.qty, 0);
+  const remove = (id: string) => persist(items.filter(i => i.id !== id));
+  const changeQty = (id: string, d: number) =>
+    persist(items.map(i => i.id === id ? { ...i, qty: i.qty + d } : i).filter(i => i.qty > 0));
 
-  const removeItem = (id: string) => updateCart(items.filter(i => i.id !== id));
-
-  const updateQty = (id: string, delta: number) => {
-    const updated = items
-      .map(item => item.id === id ? { ...item, qty: item.qty + delta } : item)
-      .filter(item => item.qty > 0);
-    updateCart(updated);
+  const applyPromo = (code?: string) => {
+    const c = (code ?? promoInput).trim().toUpperCase();
+    if (!c) { setPromoError('Enter a promo code'); return; }
+    if (c === PROMO_CODE) { setAppliedPromo(c); setPromoInput(''); setPromoError(''); }
+    else setPromoError('Code not found. Try WELCOME10');
   };
 
-  const handleApplyPromo = (codeToApply?: string) => {
-    setPromoError('');
-    const code = (codeToApply || promoCode).trim().toUpperCase();
-    if (!code) { setPromoError('Enter a promo code first'); return; }
-    if (code === SAMPLE_PROMO_CODE) {
-      setAppliedPromo(code);
-      setPromoCode('');
-    } else {
-      setPromoError('Invalid code. Try WELCOME10');
-    }
-  };
-
-  const handleRemovePromo = () => {
-    setAppliedPromo(null);
-    setPromoCode('');
-    setPromoError('');
-  };
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  const discount  = appliedPromo ? +(subtotal * PROMO_DISCOUNT).toFixed(2) : 0;
+  const shipping  = subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : 150;
+  const total     = subtotal - discount + shipping;
+  const qty       = items.reduce((s, i) => s + i.qty, 0);
+  const progress  = Math.min(100, Math.round((subtotal / FREE_SHIPPING_THRESHOLD) * 100));
+  const remaining = +(Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal)).toFixed(0);
 
   if (!isOpen) return null;
 
   return (
-    <div className="cd-overlay" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="cd-panel">
+    <div
+      className="cd-backdrop"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="cd-drawer">
 
-        {/* ── Header ───────────────────────────── */}
-        <div className="cd-header">
-          <div className="cd-header-left">
-            <div className="cd-header-icon">
-              <ShoppingBag size={18} />
-            </div>
+        {/* Header */}
+        <div className="cd-head">
+          <div className="cd-head-left">
+            <span className="cd-head-bag"><ShoppingBag size={16} strokeWidth={2} /></span>
             <div>
-              <h2 className="cd-header-title">Shopping Bag</h2>
-              <p className="cd-header-sub">
-                {totalItemCount === 0 ? 'Empty' : `${totalItemCount} ${totalItemCount === 1 ? 'item' : 'items'}`}
-              </p>
+              <p className="cd-head-title">Your Bag</p>
+              <p className="cd-head-count">{qty} {qty === 1 ? 'item' : 'items'}</p>
             </div>
           </div>
-          <button onClick={onClose} className="cd-close-btn" aria-label="Close cart">
-            <X size={18} />
+          <button className="cd-close" onClick={onClose} aria-label="Close">
+            <X size={16} strokeWidth={2} />
           </button>
         </div>
 
-        {/* ── Free Shipping Bar ─────────────────── */}
+        {/* Shipping progress */}
         {items.length > 0 && (
-          <div className="cd-shipping-bar">
-            <div className="cd-shipping-bar-text">
-              <span className="cd-shipping-bar-icon"><Truck size={12} /></span>
-              {amountNeeded === 0 ? (
-                <span className="cd-shipping-unlocked">🎉 You unlocked <strong>FREE shipping</strong>!</span>
-              ) : (
-                <span>Add <strong>NPR {amountNeeded.toFixed(0)}</strong> more for free shipping</span>
-              )}
-              <span className="cd-shipping-pct">{progressToFreeShipping}%</span>
+          <div className="cd-ship-bar">
+            <div className="cd-ship-row">
+              <span className="cd-ship-left">
+                <Truck size={13} strokeWidth={2} />
+                {remaining === 0 ? (
+                  <span className="cd-ship-done">
+                    <CheckCircle2 size={12} strokeWidth={2.5} />
+                    Free shipping unlocked
+                  </span>
+                ) : (
+                  <span>NPR <strong>{remaining}</strong> away from free shipping</span>
+                )}
+              </span>
+              <span className="cd-ship-pct">{progress}%</span>
             </div>
-            <div className="cd-shipping-track">
-              <div className="cd-shipping-fill" style={{ width: `${progressToFreeShipping}%` }} />
+            <div className="cd-ship-track">
+              <div className="cd-ship-fill" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}
 
-        {/* ── Cart Items ────────────────────────── */}
-        <div className="cd-items-area">
+        {/* Items */}
+        <div className="cd-body">
           {items.length === 0 ? (
             <div className="cd-empty">
-              <div className="cd-empty-icon"><ShoppingBag size={36} /></div>
-              <h3 className="cd-empty-title">Your bag is empty</h3>
-              <p className="cd-empty-sub">Explore our handcrafted collection and find pieces you&apos;ll love.</p>
-              <button onClick={onClose} className="cd-empty-btn">
-                Browse Collection →
+              <div className="cd-empty-icon">
+                <ShoppingBag size={28} strokeWidth={1.5} />
+              </div>
+              <p className="cd-empty-title">Your bag is empty</p>
+              <p className="cd-empty-text">Add pieces from our collection to get started.</p>
+              <button className="cd-empty-cta" onClick={onClose}>
+                Browse collection <ChevronRight size={14} />
               </button>
             </div>
           ) : (
-            <div className="cd-items-list">
-              {items.map((item) => (
+            <>
+              {items.map(item => (
                 <div key={item.id} className="cd-item">
-                  {/* Product Image */}
-                  <div className="cd-item-img-wrap">
-                    <ItemImage src={item.img} alt={item.name} />
+                  <div className="cd-item-img-box">
+                    <ProductImage src={item.img} alt={item.name} />
                   </div>
 
-                  {/* Product Info */}
-                  <div className="cd-item-body">
-                    <div className="cd-item-top">
-                      <div className="cd-item-meta">
-                        {item.category && (
-                          <span className="cd-item-cat">{item.category}</span>
-                        )}
-                        <h3 className="cd-item-name">{item.name}</h3>
-                        <p className="cd-item-unit-price">NPR {item.price.toLocaleString()} each</p>
-                      </div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="cd-remove-btn"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
+                  <div className="cd-item-info">
+                    {item.category && (
+                      <span className="cd-item-cat">{item.category}</span>
+                    )}
+                    <p className="cd-item-name">{item.name}</p>
+                    <p className="cd-item-each">NPR {item.price.toLocaleString()} / ea</p>
 
-                    {/* Qty + Price Row */}
-                    <div className="cd-item-bottom">
-                      <div className="cd-qty-control">
+                    <div className="cd-item-foot">
+                      <div className="cd-qty">
                         <button
-                          onClick={() => updateQty(item.id, -1)}
                           className="cd-qty-btn"
-                          aria-label="Decrease quantity"
+                          onClick={() => changeQty(item.id, -1)}
+                          aria-label="Remove one"
                         >
-                          <Minus size={10} />
+                          <Minus size={10} strokeWidth={2.5} />
                         </button>
-                        <span className="cd-qty-val">{item.qty}</span>
+                        <span className="cd-qty-num">{item.qty}</span>
                         <button
-                          onClick={() => updateQty(item.id, 1)}
                           className="cd-qty-btn"
-                          aria-label="Increase quantity"
+                          onClick={() => changeQty(item.id, 1)}
+                          aria-label="Add one"
                         >
-                          <Plus size={10} />
+                          <Plus size={10} strokeWidth={2.5} />
                         </button>
                       </div>
-                      <span className="cd-item-total">
-                        NPR {(item.price * item.qty).toLocaleString()}
-                      </span>
+
+                      <div className="cd-item-right">
+                        <span className="cd-item-price">
+                          NPR {(item.price * item.qty).toLocaleString()}
+                        </span>
+                        <button
+                          className="cd-remove"
+                          onClick={() => remove(item.id)}
+                          aria-label="Remove"
+                        >
+                          <Trash2 size={13} strokeWidth={2} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
-
-              {/* Upsell nudge */}
-              <div className="cd-upsell">
-                <Package size={13} />
-                <span>All orders are gift-wrapped & packaged with care</span>
-              </div>
-            </div>
+            </>
           )}
         </div>
 
-        {/* ── Footer ─────────────────────────── */}
+        {/* Footer */}
         {items.length > 0 && (
-          <div className="cd-footer">
+          <div className="cd-foot">
 
-            {/* Promo Code */}
+            {/* Promo */}
             {!appliedPromo ? (
-              <div className="cd-promo-row">
-                <div className="cd-promo-label">
-                  <Tag size={12} />
-                  <span>Promo Code</span>
-                </div>
-                <button
-                  className="cd-promo-hint"
-                  onClick={() => handleApplyPromo(SAMPLE_PROMO_CODE)}
-                >
-                  <Sparkles size={10} /> WELCOME10 (10% off)
-                </button>
-                <div className="cd-promo-input-row">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={e => { setPromoCode(e.target.value); setPromoError(''); }}
-                    onKeyDown={e => e.key === 'Enter' && handleApplyPromo()}
-                    placeholder="Enter promo code"
-                    className="cd-promo-input"
-                  />
-                  <button onClick={() => handleApplyPromo()} className="cd-promo-apply-btn">
-                    Apply
+              <div className="cd-promo">
+                <div className="cd-promo-top">
+                  <span className="cd-promo-label"><Tag size={12} strokeWidth={2} /> Promo code</span>
+                  <button
+                    className="cd-promo-auto"
+                    onClick={() => applyPromo(PROMO_CODE)}
+                  >
+                    <Sparkles size={11} strokeWidth={2} /> Use WELCOME10
                   </button>
                 </div>
-                {promoError && <p className="cd-promo-error">{promoError}</p>}
+                <div className="cd-promo-row">
+                  <input
+                    className="cd-promo-input"
+                    type="text"
+                    placeholder="Enter code"
+                    value={promoInput}
+                    onChange={e => { setPromoInput(e.target.value); setPromoError(''); }}
+                    onKeyDown={e => e.key === 'Enter' && applyPromo()}
+                  />
+                  <button className="cd-promo-btn" onClick={() => applyPromo()}>Apply</button>
+                </div>
+                {promoError && (
+                  <p className="cd-promo-err">{promoError}</p>
+                )}
               </div>
             ) : (
-              <div className="cd-promo-applied">
-                <div className="cd-promo-applied-left">
-                  <Sparkles size={13} />
-                  <span>{appliedPromo} — 10% OFF applied</span>
-                </div>
-                <button onClick={handleRemovePromo} className="cd-promo-remove">
-                  <X size={13} />
+              <div className="cd-promo-active">
+                <span className="cd-promo-active-label">
+                  <CheckCircle2 size={14} strokeWidth={2.5} />
+                  {appliedPromo} — 10% off applied
+                </span>
+                <button
+                  className="cd-promo-remove"
+                  onClick={() => setAppliedPromo(null)}
+                  aria-label="Remove promo"
+                >
+                  <X size={13} strokeWidth={2} />
                 </button>
               </div>
             )}
 
-            {/* Price Breakdown */}
+            {/* Totals */}
             <div className="cd-totals">
               <div className="cd-total-row">
                 <span>Subtotal</span>
                 <span>NPR {subtotal.toLocaleString()}</span>
               </div>
-              {appliedPromo && (
-                <div className="cd-total-row cd-discount-row">
+              {discount > 0 && (
+                <div className="cd-total-row cd-total-discount">
                   <span>Discount ({appliedPromo})</span>
-                  <span>−NPR {discountAmount.toLocaleString()}</span>
+                  <span>− NPR {discount.toLocaleString()}</span>
                 </div>
               )}
               <div className="cd-total-row">
                 <span>Shipping</span>
-                <span className={estimatedShipping === 0 ? 'cd-free' : ''}>
-                  {estimatedShipping === 0 ? 'FREE 🎉' : `NPR ${estimatedShipping}`}
-                </span>
+                {shipping === 0 ? (
+                  <span className="cd-total-free">
+                    <CheckCircle2 size={11} strokeWidth={2.5} /> Free
+                  </span>
+                ) : (
+                  <span>NPR {shipping}</span>
+                )}
               </div>
-              <div className="cd-total-final">
+              <div className="cd-total-grand">
                 <span>Total</span>
                 <span>NPR {total.toLocaleString()}</span>
               </div>
             </div>
 
-            {/* Checkout CTA */}
-            <Link
-              href="/checkout"
-              onClick={onClose}
-              className="cd-checkout-btn"
-            >
-              <span>Proceed to Checkout</span>
-              <ArrowRight size={16} />
+            {/* CTA */}
+            <Link href="/checkout" onClick={onClose} className="cd-cta">
+              Checkout
+              <ArrowRight size={15} strokeWidth={2} />
             </Link>
 
-            {/* Security line */}
-            <div className="cd-secure-line">
-              <ShieldCheck size={11} />
-              <span>256-Bit SSL Encrypted &amp; Safe Checkout</span>
+            <div className="cd-secure">
+              <Shield size={11} strokeWidth={2} />
+              <span>Secure checkout — 256-bit SSL</span>
             </div>
+
           </div>
         )}
       </div>
