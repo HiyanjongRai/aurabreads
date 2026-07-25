@@ -2057,4 +2057,132 @@ a {
   }
 }
 
+/* ─────────────────────────────────────────
+   USER ACCOUNT DROPDOWN MENU
+───────────────────────────────────────── */
+.ab-user-menu-container {
+  position: relative;
+}
+
+.ab-user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 6px;
+  border-radius: 99px;
+  background: #fbf9f5;
+  border: 1.5px solid rgba(212,175,55,0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ab-user-menu-btn:hover {
+  background: #f4eee0;
+  border-color: #d4af37;
+  box-shadow: 0 4px 14px rgba(212,175,55,0.18);
+}
+
+.ab-user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #d4af37 0%, #a07c2e 100%);
+  color: #000000;
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+
+.ab-user-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #111827;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ab-user-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 210px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  padding: 8px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.16);
+  z-index: 9999;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ab-user-menu-container:hover .ab-user-dropdown,
+.ab-user-menu-container:focus-within .ab-user-dropdown {
+  display: flex;
+}
+
+.ab-user-dropdown-header {
+  padding: 8px 12px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 2px;
+}
+
+.ab-user-dropdown-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ab-user-dropdown-subtitle {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c9a84c;
+  margin-top: 2px;
+}
+
+.ab-user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ab-user-dropdown-item:hover {
+  background: #fdfaf3;
+  color: #a07c2e;
+}
+
+.ab-user-dropdown-item.danger {
+  color: #dc2626;
+}
+
+.ab-user-dropdown-item.danger:hover {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+
 

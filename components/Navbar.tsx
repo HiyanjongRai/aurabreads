@@ -158,39 +158,39 @@ function NavbarContent() {
 
               {/* Account button: Logged-in vs Logged-out */}
               {user ? (
-                <div className="relative group">
+                <div className="ab-user-menu-container">
                   <button
                     aria-label="Account"
-                    className="ab-icon-btn flex items-center gap-1.5 px-2 py-1 rounded-full border border-gold-400/40 bg-gold-50/50 hover:border-gold-500 transition"
+                    className="ab-user-menu-btn"
                     onClick={handleAccountClick}
                     id="nav-account-btn"
                   >
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-gold-600 to-amber-400 text-black font-extrabold text-xs flex items-center justify-center shadow-sm">
+                    <div className="ab-user-avatar">
                       {initial}
                     </div>
-                    <span className="text-xs font-bold text-gray-900 hidden sm:inline-block max-w-[80px] truncate">
+                    <span className="ab-user-name hidden sm:inline-block">
                       {user.name.split(" ")[0]}
                     </span>
-                    <ChevronDown size={12} className="text-gray-500 hidden sm:inline-block" />
+                    <ChevronDown size={12} style={{ color: "#6b7280" }} className="hidden sm:inline-block" />
                   </button>
 
                   {/* Dropdown Menu */}
-                  <div className="absolute right-0 top-full mt-1 w-48 rounded-2xl bg-white p-2 shadow-2xl border border-gray-100 hidden group-hover:block z-50 animate-fade-in">
-                    <div className="px-3 py-2 border-b border-gray-100 mb-1">
-                      <p className="text-xs font-bold text-gray-900 truncate">{user.name}</p>
-                      <p className="text-[10px] text-gold-700 font-semibold uppercase">{user.role} Account</p>
+                  <div className="ab-user-dropdown">
+                    <div className="ab-user-dropdown-header">
+                      <p className="ab-user-dropdown-title">{user.name}</p>
+                      <p className="ab-user-dropdown-subtitle">{user.role} ACCOUNT</p>
                     </div>
                     <Link
                       href={getDashboardUrl(user.role)}
-                      className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gold-50 hover:text-gold-800 transition"
+                      className="ab-user-dropdown-item"
                     >
                       <LayoutDashboard size={14} />
                       <span>Dashboard</span>
                     </Link>
-                    <form action={logout}>
+                    <form action={logout} style={{ width: "100%" }}>
                       <button
                         type="submit"
-                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition"
+                        className="ab-user-dropdown-item danger"
                       >
                         <LogOut size={14} />
                         <span>Sign Out</span>
