@@ -426,7 +426,9 @@ export default function ProductsListClient({ initialProducts }: Props) {
                   {categoryOptions.map((cat) => {
                     const isChecked = selectedCategory === cat.name;
                     return (
-                      <div
+                      <button
+                        type="button"
+                        aria-pressed={isChecked}
                         key={cat.name}
                         onClick={() => setSelectedCategory(isChecked ? null : cat.name)}
                         className={`ab-pl-checkbox-row ${isChecked ? 'active' : ''}`}
@@ -436,7 +438,7 @@ export default function ProductsListClient({ initialProducts }: Props) {
                         </div>
                         <span className="ab-pl-checkbox-label">{cat.name}</span>
                         <span className="ab-pl-checkbox-count">({cat.count})</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -454,7 +456,9 @@ export default function ProductsListClient({ initialProducts }: Props) {
                   {COLLECTIONS.map((col) => {
                     const isChecked = selectedCollections.includes(col);
                     return (
-                      <div
+                      <button
+                        type="button"
+                        aria-pressed={isChecked}
                         key={col}
                         onClick={() => {
                           setSelectedCollections((prev) =>
@@ -468,7 +472,7 @@ export default function ProductsListClient({ initialProducts }: Props) {
                         </div>
                         <span className="ab-pl-checkbox-label">{col}</span>
                         <span className="ab-pl-checkbox-count">({collectionCounts[col] ?? 0})</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>
@@ -511,7 +515,9 @@ export default function ProductsListClient({ initialProducts }: Props) {
                   {MATERIALS.map((mat) => {
                     const isChecked = selectedMaterials.includes(mat);
                     return (
-                      <div
+                      <button
+                        type="button"
+                        aria-pressed={isChecked}
                         key={mat}
                         onClick={() => {
                           setSelectedMaterials((prev) =>
@@ -524,7 +530,7 @@ export default function ProductsListClient({ initialProducts }: Props) {
                           {isChecked && <Check size={10} strokeWidth={3} />}
                         </div>
                         <span className="ab-pl-checkbox-label">{mat}</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </div>

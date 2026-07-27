@@ -313,7 +313,7 @@ export default function CheckoutPage() {
               <div className="checkout-payment-options">
                 <label className="checkout-payment-option selected">
                   <input type="radio" name="payment" defaultChecked />
-                  <div className="checkout-payment-icon">💵</div>
+                  <div className="checkout-payment-icon">Rs</div>
                   <div>
                     <strong>Cash on Delivery</strong>
                     <span>Pay when your order arrives</span>
@@ -321,7 +321,7 @@ export default function CheckoutPage() {
                 </label>
                 <label className="checkout-payment-option">
                   <input type="radio" name="payment" />
-                  <div className="checkout-payment-icon">💳</div>
+                  <div className="checkout-payment-icon">Pay</div>
                   <div>
                     <strong>Card / eSewa</strong>
                     <span>Secure online payment</span>
@@ -449,7 +449,7 @@ export default function CheckoutPage() {
               <div className="checkout-total-row">
                 <span>Shipping</span>
                 <span className={shippingFee === 0 ? 'free' : ''}>
-                  {shippingFee === 0 ? 'FREE 🎉' : `NPR ${shippingFee}`}
+                  {shippingFee === 0 ? 'FREE' : `NPR ${shippingFee}`}
                 </span>
               </div>
               <div className="checkout-total-final">

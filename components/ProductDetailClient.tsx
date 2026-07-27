@@ -119,7 +119,7 @@ export default function ProductDetailClient({ product: initialProduct, relatedPr
   };
 
   return (
-    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 60px', fontFamily: 'Inter, sans-serif' }}>
+    <div className="product-detail-page" style={{ maxWidth: 1280, margin: '0 auto', padding: '24px 20px 60px', fontFamily: 'Inter, sans-serif' }}>
       
       {/* ── Breadcrumb Nav ─────────────────────────────────────────────────── */}
       <nav style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#6b7280', marginBottom: 28, flexWrap: 'wrap' }}>
@@ -131,12 +131,12 @@ export default function ProductDetailClient({ product: initialProduct, relatedPr
       </nav>
 
       {/* ── Main Product Detail Grid ───────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 44, alignItems: 'start', marginBottom: 64 }}>
+      <div className="product-detail-layout" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: 44, alignItems: 'start', marginBottom: 64 }}>
         
         {/* Left Column: Image Gallery (Screenshot 2 layout) */}
-        <div style={{ display: 'flex', gap: 16 }}>
+        <div className="product-detail-gallery-row" style={{ display: 'flex', gap: 16 }}>
           {/* Vertical Thumbnails */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 72, flexShrink: 0 }}>
+          <div className="product-detail-thumbs" style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 72, flexShrink: 0 }}>
             {images.map((imgUrl, idx) => (
               <button
                 key={idx}
@@ -159,7 +159,7 @@ export default function ProductDetailClient({ product: initialProduct, relatedPr
           </div>
 
           {/* Large Main Display Image */}
-          <div style={{
+          <div className="product-detail-main-image" style={{
             position: 'relative',
             flex: 1,
             aspectRatio: '1',
@@ -188,7 +188,7 @@ export default function ProductDetailClient({ product: initialProduct, relatedPr
         </div>
 
         {/* Right Column: Product Meta & Purchase Panel */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div className="product-detail-info" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           
           {/* Tag & Title */}
           <div>
@@ -437,7 +437,7 @@ export default function ProductDetailClient({ product: initialProduct, relatedPr
       </div>
 
       {/* ── Middle Trust Features Strip (Screenshot 2) ────────────────────── */}
-      <div style={{
+      <div className="product-trust-strip" style={{
         background: '#0a0a0f',
         color: '#ffffff',
         borderRadius: 20,
@@ -516,7 +516,7 @@ export default function ProductDetailClient({ product: initialProduct, relatedPr
             <Link href="/#categories" style={{ fontSize: 12, fontWeight: 700, color: '#d4af37', textDecoration: 'none' }}>View All</Link>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
+          <div className="product-related-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
             {relatedProducts.map((rel) => {
               const relImg = rel.images && rel.images.length > 0 ? rel.images[0] : '/product-earrings1.png';
               return (

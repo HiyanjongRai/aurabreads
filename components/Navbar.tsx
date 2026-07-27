@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { CartDrawer } from "@/components/CartDrawer";
 import { logout } from "@/app/actions/auth";
-import { User, LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
+import { LogOut, LayoutDashboard, ChevronDown } from "lucide-react";
 
 type AuthTab = "login" | "register";
 

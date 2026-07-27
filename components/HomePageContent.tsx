@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PublicProduct } from "@/lib/products";
 import { useState } from "react";
+import { ArrowRight } from "lucide-react";
 
 const categories = [
   { name: "Earrings", img: "/cat-earrings.png", x: 0 },
@@ -15,7 +16,7 @@ const categories = [
   { name: "Sunglasses", img: "/cat-sunglasses.png", x: 5 },
 ];
 
-const catEmoji = ["💍", "📿", "⛓️", "💍", "🪮", "🕶️"];
+const catInitials = ["ER", "NK", "BR", "RG", "HA", "SG"];
 
 const demoProducts = [
   { id: "demo-1", name: "Twist Knot Earrings", price: 18.00, salePrice: null, rating: 4.5, reviews: 128, img: "/product-earrings1.png" },
@@ -141,7 +142,7 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
             {categories.map((cat, i) => (
               <Link href="#" key={cat.name} className="ab-category-item">
                 <div className="ab-category-circle">
-                  <span className="ab-cat-emoji">{catEmoji[i]}</span>
+                  <span className="ab-cat-emoji">{catInitials[i]}</span>
                 </div>
                 <span className="ab-category-name">{cat.name}</span>
               </Link>
@@ -404,7 +405,9 @@ export default function HomePageContent({ initialProducts = [] }: Props) {
               <p>Subscribe for exclusive offers, early access and style updates.</p>
               <form className="ab-newsletter-form" onSubmit={(e) => e.preventDefault()}>
                 <input type="email" placeholder="Enter your email" aria-label="Email address" />
-                <button type="submit" aria-label="Subscribe">→</button>
+                <button type="submit" aria-label="Subscribe">
+                  <ArrowRight size={16} aria-hidden="true" />
+                </button>
               </form>
             </div>
           </div>
