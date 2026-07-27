@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { MobileViewportGuard } from "@/components/MobileViewportGuard";
 import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
@@ -33,6 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${cormorant.variable} h-full`}>
       <body className="min-h-full antialiased">
+        <MobileViewportGuard />
         <ToastProvider>{children}</ToastProvider>
         <Analytics />
       </body>

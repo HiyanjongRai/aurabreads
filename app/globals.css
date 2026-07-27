@@ -23,10 +23,77 @@
 }
 
 html, body {
+  width: 100%;
+  min-width: 0;
   font-family: var(--font-inter), "Inter", sans-serif;
   color: var(--text);
   background: #ffffff;
   scroll-behavior: smooth;
+  overflow-x: clip;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100svh;
+}
+
+html[data-keyboard-open] .auth-modal-backdrop,
+html[data-keyboard-open] .cd-backdrop {
+  min-height: var(--ab-visual-viewport-height, 100dvh);
+}
+
+html[data-keyboard-open] .auth-modal-panel {
+  max-height: calc(var(--ab-visual-viewport-height, 100dvh) - max(12px, env(safe-area-inset-top)));
+}
+
+html[data-keyboard-open] .cd-drawer {
+  height: var(--ab-visual-viewport-height, 100dvh);
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+img,
+video,
+canvas {
+  display: block;
+  height: auto;
+}
+
+input,
+textarea,
+select {
+  max-width: 100%;
+  min-width: 0;
+  font-size: 16px !important;
+  line-height: 1.4;
+  scroll-margin-block: 96px 32px;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  font-size: inherit !important;
+}
+
+textarea {
+  min-height: 44px;
+}
+
+button,
+[role="button"],
+a,
+label {
+  touch-action: manipulation;
+}
+
+table {
+  max-width: 100%;
 }
 
 /* ─────────────────────────────────────────
@@ -2448,7 +2515,7 @@ a {
   border: 1.5px solid #e5e0d8;
   background: #fafaf9;
   padding: 0 14px;
-  font-size: 13.5px;
+  font-size: 16px;
   color: #111;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
@@ -2470,7 +2537,7 @@ a {
   border-radius: 12px !important;
   border: 1.5px solid #e5e0d8 !important;
   background: #fafaf9 !important;
-  font-size: 13.5px !important;
+  font-size: 16px !important;
 }
 
 .auth-modal-form .block:focus {
@@ -5441,6 +5508,42 @@ a {
   .ab-pl-trust-container { grid-template-columns: 1fr; gap: 16px; }
 }
 
+@media (max-width: 768px) {
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  th,
+  td {
+    white-space: nowrap;
+  }
+
+  .admin-main [style*="gridTemplateColumns"],
+  .seller-main [style*="gridTemplateColumns"],
+  .customer-content [style*="gridTemplateColumns"],
+  .dashboard-page-container [style*="gridTemplateColumns"],
+  .admin-main [style*="grid-template-columns"],
+  .seller-main [style*="grid-template-columns"],
+  .customer-content [style*="grid-template-columns"],
+  .dashboard-page-container [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-main [style*="minmax(320px"],
+  .seller-main [style*="minmax(320px"],
+  .customer-content [style*="minmax(320px"],
+  .dashboard-page-container [style*="minmax(320px"],
+  .admin-main [style*="minmax(280px"],
+  .seller-main [style*="minmax(280px"],
+  .customer-content [style*="minmax(280px"],
+  .dashboard-page-container [style*="minmax(280px"] {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 /* ==========================================================================
    iPhone 12 production polish layer
    ========================================================================== */
@@ -5467,6 +5570,13 @@ a {
 
   body {
     -webkit-font-smoothing: antialiased;
+  }
+
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+    scroll-margin-block: 112px 32px;
   }
 
   .ab-topbar {
@@ -5569,13 +5679,18 @@ a {
   .auth-modal-backdrop {
     align-items: flex-end;
     padding: 0;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .auth-modal-panel {
     width: 100%;
     max-width: none;
-    max-height: calc(100dvh - 12px);
+    max-height: calc(100dvh - max(12px, env(safe-area-inset-top)));
     border-radius: 24px 24px 0 0;
+    margin-top: auto;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .auth-modal-header {
@@ -5588,6 +5703,8 @@ a {
 
   .auth-modal-body {
     padding: 18px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .auth-row {
@@ -5635,16 +5752,20 @@ a {
 
   .cd-backdrop {
     align-items: flex-end;
+    min-height: 100dvh;
+    overflow: hidden;
   }
 
   .cd-drawer {
     height: 100dvh;
     display: flex;
     flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .cd-body {
     flex: 1;
+    -webkit-overflow-scrolling: touch;
   }
 
   .cd-item-name,
