@@ -34,7 +34,7 @@ export default async function AdminCustomersPage() {
   ]);
 
   return (
-    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1400 }}>
+    <div className="dashboard-page-container" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 1400 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 99, border: '1px solid rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.08)', padding: '4px 12px', fontSize: 11, fontWeight: 700, letterSpacing: '0.18em', color: '#d4af37', textTransform: 'uppercase' }}>

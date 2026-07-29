@@ -16,7 +16,7 @@ export default async function SellersListPage() {
   if (user.role !== 'ADMIN') redirect('/dashboard');
 
   return (
-    <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div className="dashboard-page-container" style={{ padding: '32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>

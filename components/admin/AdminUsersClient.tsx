@@ -107,7 +107,7 @@ export default function AdminUsersClient({ initialUsers, totalUsers }: Props) {
   };
 
   return (
-    <div style={{ padding: '32px', maxWidth: 1400, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, color: '#ffffff' }}>
+    <div className="dashboard-page-container" style={{ padding: '32px', maxWidth: 1400, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24, color: '#ffffff' }}>
       
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
